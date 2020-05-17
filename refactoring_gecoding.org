@@ -1,0 +1,633 @@
+#+TITLE: Refactoring  Python Google Maps Access Code
+
+So, I've been working on analysis of property prices in Ireland recently [fn:1],
+and I sourced some code from Shane Lynn, who did this before [fn:2]. 
+
+Unfortunately, he stopped doing this in 2016 (back when Google Maps was still free). 
+
+So, as part of my work, I ran this script up till October 2018 to update
+to the (then) most recent date. 
+
+However, that was a long time ago now, and I actually want to make this easier
+for myself in the future by automating it.
+
+Unfortunately, it's just a script that doesn't take arguments and doesn't really
+lend itself well to extension. While I don't think I'll need to change
+it too much in the future, I would like to be able to update the database
+at the flick of a button so I can build tools on top of the database. 
+
+Additionally, there's a commercial leases register that I'd like to
+give the same treatment. In order to do this, I'm going to take
+the advice of the esteemed Kent Beck 
+#+BEGIN_QUOTE
+First make the change easy (warning: this may be hard!); then make the easy change
+#+END_QUOTE
+
+In general, this article talks about refactoring in the Martin Fowler sense:
+#+BEGIN_QUOTE
+code refactoring is the process of restructuring existing computer
+code — changing the factoring — without changing its external behavior
+#+END_QUOTE
+
+So, this imposes some constraints on us. We *must not* modify the behaviour
+while improving the structure. In order to make this work, we need some
+tests to assess what the current behaviour is.
+
+Unfortunately, we don't have any tests for this script, except for
+the already existing tests (the old data). Additionally, each network
+call we make costs money so we want to improve this script without
+costing ourselves too much money [fn:3]
+
+I'm going to approach this in a reasonably structured way. Firstly,
+we'll review each piece of the script, and assess what would
+make it more maintainable, or at least more maintainable. 
+
+I'll reference particular refactorings from the book of the same
+name [fn:4]. These have a number associated with them, which
+is the page number from the 2nd edition. 
+
+** Introduction & Imports
+
+#+BEGIN_SRC python :tangle geocode_richie.py
+ """
+ Python script for batch geocoding of addresses using the Google Geocoding API.
+ This script allows for massive lists of addresses to be geocoded for free by pausing when the 
+ geocoder hits the free rate limit set by Google (2500 per day).  If you have an API key for paid
+ geocoding from Google, set it in the API key section.
+ Addresses for geocoding can be specified in a list of strings "addresses". In this script, addresses
+ come from a csv file with a column "Address". Adjust the code to your own requirements as needed.
+ After every 500 successul geocode operations, a temporary file with results is recorded in case of 
+ script failure / loss of connection later.
+ Addresses and data are held in memory, so this script may need to be adjusted to process files line
+ by line if you are processing millions of entries.
+ Shane Lynn
+ 5th November 2016
+ """
+
+ import pandas as pd
+ import requests
+ 
+ import time
+#+END_SRC
+
+This is pretty unremarkable, except that the comments are now lies. 
+
+We should probably change this, but commenting the overall 
+script is a task best done at the end of this process, to 
+avoid it becoming misleading (as in this case). 
+
+Current step: delete comments. 
+
+#+BEGIN_SRC python :tangle geocode_richie.py
+ logger = logging.getLogger("root")
+ logger.setLevel(logging.DEBUG)
+ # create console handler
+ ch = logging.StreamHandler()
+ ch.setLevel(logging.DEBUG)
+ logger.addHandler(ch)
+#+END_SRC
+
+The next portion of the code sets up a logger. 
+
+This doesn't really need to be at the top level, so we
+can abstract it into a function. Essentially, we're
+doing the extract function refactoring here.
+
+This is a nice easy one, as the logger isn't
+mutated or used in multiple places further on. 
+
+#+BEGIN_SRC python :tangle geocode/geocode_funcs.py
+  import logging
+  def create_logger():
+      logger = logging.getLogger("root")
+      logger.setLevel(logging.DEBUG)
+      # create console handler
+      ch = logging.StreamHandler()
+      ch.setLevel(logging.DEBUG)
+      logger.addHandler(ch)
+      return logger
+
+
+#+END_SRC
+
+We could update this to handle different log levels,
+but that's a bigger change so we'll avoid doing it for now. 
+
+Given that we have a function, we can actually write 
+a test. In general, it's better to write these tests
+before the code (i.e. Test-Driven-Development), but
+when working with legacy code (even small pieces of it like this),
+this tends to be less practical. 
+
+Before we can write and run tests easily, we need to create a directory
+to hold our code and tests. We also need to invoke the ghost of python
+actions, __init__.py. 
+
+#+BEGIN_SRC sh
+mkdir geocode
+mkdir geocode/tests/
+touch geocode/tests/__init__.py
+#+END_SRC
+
+#+RESULTS:
+
+
+Now we can add a test file, and start moving code from the top level file
+into the package, adding tests as we go. 
+
+#+BEGIN_SRC python :tangle geocode/tests/test_google.py
+import pytest
+from geocode_funcs import create_logger, get_api_key
+#+END_SRC
+
+#+BEGIN_SRC python :tangle geocode/tests/test_google.py
+
+  def test_logger_is_created() -> None:
+      logger = create_logger()
+      assert logger is not None
+
+
+#+END_SRC
+
+This is a crappy test, but we'll improve it as we go. The important
+thing is to start adding tests, as they make it easier to iterate. 
+
+#+BEGIN_SRC python
+ key_file = open("key.txt", "r")
+ key = key_file.readline().strip()
+ API_KEY = key
+#+END_SRC
+
+The next part of the code deals with authentication.
+We don't want to put keys in the scripts, as that's a big security
+risk. 
+
+We should create a function here, which takes a path and returns a string
+with the key. First we'll write another test, so that we know
+what we're doing. 
+
+#+BEGIN_SRC python :tangle geocode/tests/test_google.py
+  def test_get_api_key() -> None:
+      path = 'key.txt'
+      apikey = get_api_key(path)
+      assert isinstance(apikey, str)
+#+END_SRC
+
+
+
+We run this test, and it fails because the function doesn't exist.
+Let's add it now. 
+
+
+#+BEGIN_SRC python :tangle geocode/geocode_funcs.py
+  def get_api_key(path) -> str:
+      key_file = open(path, "r")
+      key = key_file.readline().strip()
+      return key
+
+
+#+END_SRC
+
+
+Again, this is just mostly mechanical. 
+
+The only real art to it is deciding what to break down, and what to
+name stuff. In general, making changes like this is dangerous,
+so you want to take a bunch of small steps and add tests, to 
+avoid causing more problems than you solve. 
+
+
+
+The next portion of the code handles options
+
+#+BEGIN_SRC python
+BACKOFF_TIME = 30
+ # Set your output file name here.
+ output_filename = 'output_full_2018_19.csv'
+ # Set your input file here
+ input_filename = 'prop2018-19_todo.csv'
+ # Specify the column name in your input data that contains addresses here
+ address_column_name = "address"
+ # Return Full Google Results? If True, full JSON results from Google are included in output
+ RETURN_FULL_RESULTS = True
+#+END_SRC
+
+In general, these should probably be arguments (using argparse).
+
+Normally, I wouldn't make this change now, but as you may or may not
+recall, we actually haven't run the whole process end-to-end
+yet. [fn:5]. In order to make testing easy, we need to add these
+options now (so that we can easily pass in test data). 
+
+We'll use [[https://docs.python.org/3/howto/argparse.html][argparse]], which is included in the python standard library. 
+
+Argpase essentially uses a Parser object, to which one
+adds arguments which can then be used on the command line. 
+
+It's essentially a nicer version of $1, $2 etc. 
+
+One thing that strikes me now is that I'm not really sure how to test
+this kind of code (i.e. argument parsing). Everything that I can
+think of seems a little redundant, to be honest. 
+
+For now, we'll rush ahead, but keep the lack of tests around this
+part of the code in mind for the future. 
+
+
+#+BEGIN_SRC python 
+import argparse
+parser = argparse.ArgumentParser()
+args = parser.parse_args()
+#+END_SRC
+
+
+Hmmm, interesting. My approach to this script was to break down the
+functionality into a library of functions, and then replace the
+inline code with calls to the (tested) functions. 
+
+Clearly this won't work with the argument parser, as it's by definition
+embedded within the top-level script. So we're actually gonna
+need to back up here, and get some (small) test data with known answers
+(i.e. already parsed) so that we can ensure we don't break anything
+when we change this. [fn:6]. 
+
+
+
+* Full scripts
+** Original Script
+
+ #+BEGIN_SRC python :tangle geocode_original.py
+ """
+ Python script for batch geocoding of addresses using the Google Geocoding API.
+ This script allows for massive lists of addresses to be geocoded for free by pausing when the 
+ geocoder hits the free rate limit set by Google (2500 per day).  If you have an API key for paid
+ geocoding from Google, set it in the API key section.
+ Addresses for geocoding can be specified in a list of strings "addresses". In this script, addresses
+ come from a csv file with a column "Address". Adjust the code to your own requirements as needed.
+ After every 500 successul geocode operations, a temporary file with results is recorded in case of 
+ script failure / loss of connection later.
+ Addresses and data are held in memory, so this script may need to be adjusted to process files line
+ by line if you are processing millions of entries.
+ Shane Lynn
+ 5th November 2016
+ """
+
+ import pandas as pd
+ import requests
+ import logging
+ import time
+
+ logger = logging.getLogger("root")
+ logger.setLevel(logging.DEBUG)
+ # create console handler
+ ch = logging.StreamHandler()
+ ch.setLevel(logging.DEBUG)
+ logger.addHandler(ch)
+
+ #------------------ CONFIGURATION -------------------------------
+
+ # Set your Google API key here. 
+ # Even if using the free 2500 queries a day, its worth getting an API key since the rate limit is 50 / second.
+ # With API_KEY = None, you will run into a 2 second delay every 10 requests or so.
+ # With a "Google Maps Geocoding API" key from https://console.developers.google.com/apis/, 
+ # the daily limit will be 2500, but at a much faster rate.
+ # Example: API_KEY = 'AIzaSyC9azed9tLdjpZNjg2_kVePWvMIBq154eA'
+ key_file = open("key.txt", "r")
+ key = key_file.readline().strip()
+ API_KEY = key
+ # Backoff time sets how many minutes to wait between google pings when your API limit is hit
+ BACKOFF_TIME = 30
+ # Set your output file name here.
+ output_filename = 'output_full_2018_19.csv'
+ # Set your input file here
+ input_filename = 'prop2018-19_todo.csv'
+ # Specify the column name in your input data that contains addresses here
+ address_column_name = "address"
+ # Return Full Google Results? If True, full JSON results from Google are included in output
+ RETURN_FULL_RESULTS = True
+
+ #------------------ DATA LOADING --------------------------------
+
+ # Read the data to a Pandas Dataframe
+ data = pd.read_csv(input_filename, encoding='utf8')
+
+ if address_column_name not in data.columns:
+	 raise ValueError("Missing Address column in input data")
+
+ # Form a list of addresses for geocoding:
+ # Make a big list of all of the addresses to be processed.
+ addresses = data[address_column_name].tolist()
+
+ # **** DEMO DATA / IRELAND SPECIFIC! ****
+ # We know that these addresses are in Ireland, and there's a column for county, so add this for accuracy. 
+ # (remove this line / alter for your own dataset)
+ addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+
+
+ #------------------	FUNCTION DEFINITIONS ------------------------
+
+ def get_google_results(address, api_key=None, return_full_response=False):
+     """
+     Get geocode results from Google Maps Geocoding API.
+    
+     Note, that in the case of multiple google geocode reuslts, this function returns details of the FIRST result.
+    
+     @param address: String address as accurate as possible. For Example "18 Grafton Street, Dublin, Ireland"
+     @param api_key: String API key if present from google. 
+                     If supplied, requests will use your allowance from the Google API. If not, you
+                     will be limited to the free usage of 2500 requests per day.
+     @param return_full_response: Boolean to indicate if you'd like to return the full response from google. This
+                     is useful if you'd like additional location details for storage or parsing later.
+     """
+     # Set up your Geocoding url
+     geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?address={}".format(address)
+     if api_key is not None:
+         geocode_url = geocode_url + "&key={}".format(api_key)
+        
+     # Ping google for the reuslts:
+     results = requests.get(geocode_url)
+     # Results will be in JSON format - convert to dict using requests functionality
+     results = results.json()
+    
+     # if there's no results or an error, return empty results.
+     if len(results['results']) == 0:
+         output = {
+             "formatted_address" : None,
+             "latitude": None,
+             "longitude": None,
+             "accuracy": None,
+             "google_place_id": None,
+             "type": None,
+             "postcode": None
+         }
+     else:    
+         answer = results['results'][0]
+         output = {
+             "formatted_address" : answer.get('formatted_address'),
+             "latitude": answer.get('geometry').get('location').get('lat'),
+             "longitude": answer.get('geometry').get('location').get('lng'),
+             "accuracy": answer.get('geometry').get('location_type'),
+             "google_place_id": answer.get("place_id"),
+             "type": ",".join(answer.get('types')),
+             "postcode": ",".join([x['long_name'] for x in answer.get('address_components') 
+                                   if 'postal_code' in x.get('types')])
+         }
+        
+     # Append some other details:    
+     output['input_string'] = address
+     output['number_of_results'] = len(results['results'])
+     output['status'] = results.get('status')
+     if return_full_response is True:
+         output['response'] = results
+    
+     return output
+
+ #------------------ PROCESSING LOOP -----------------------------
+
+ # Ensure, before we start, that the API key is ok/valid, and internet access is ok
+ test_result = get_google_results("London, England", API_KEY, RETURN_FULL_RESULTS)
+ if (test_result['status'] != 'OK') or (test_result['formatted_address'] != 'London, UK'):
+     logger.warning("There was an error when testing the Google Geocoder.")
+     raise ConnectionError('Problem with test results from Google Geocode - check your API key and internet connection.')
+
+ # Create a list to hold results
+ results = []
+ # Go through each address in turn
+ for address in addresses:
+     # While the address geocoding is not finished:
+     geocoded = False
+     while geocoded is not True:
+         # Geocode the address with google
+         try:
+             geocode_result = get_google_results(address, API_KEY, return_full_response=RETURN_FULL_RESULTS)
+         except Exception as e:
+             logger.exception(e)
+             logger.error("Major error with {}".format(address))
+             logger.error("Skipping!")
+             geocoded = True
+            
+         # If we're over the API limit, backoff for a while and try again later.
+         if geocode_result['status'] == 'OVER_QUERY_LIMIT':
+             logger.info("Hit Query Limit! Backing off for a bit.")
+             time.sleep(BACKOFF_TIME * 60) # sleep for 30 minutes
+             geocoded = False
+         else:
+             # If we're ok with API use, save the results
+             # Note that the results might be empty / non-ok - log this
+             if geocode_result['status'] != 'OK':
+                 logger.warning("Error geocoding {}: {}".format(address, geocode_result['status']))
+             logger.debug("Geocoded: {}: {}".format(address, geocode_result['status']))
+             results.append(geocode_result)           
+             geocoded = True
+
+     # Print status every 100 addresses
+     if len(results) % 100 == 0:
+    	 logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+            
+     # Every 500 addresses, save progress to file(in case of a failure so you have something!)
+     if len(results) % 500 == 0:
+         pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+         print("saved {r} results to file".format(r=len(results)))
+     if len(results) % 10000 == 0:
+             pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+ #All done
+ logger.info("Finished geocoding all addresses")
+ # Write the full results to csv using the pandas library.
+ pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+ #+END_SRC
+** New Script
+#+BEGIN_SRC python :tangle geocoder_new.py
+ """
+ Python script for batch geocoding of addresses using the Google Geocoding API.
+ This script allows for massive lists of addresses to be geocoded for free by pausing when the 
+ geocoder hits the free rate limit set by Google (2500 per day).  If you have an API key for paid
+ geocoding from Google, set it in the API key section.
+ Addresses for geocoding can be specified in a list of strings "addresses". In this script, addresses
+ come from a csv file with a column "Address". Adjust the code to your own requirements as needed.
+ After every 500 successul geocode operations, a temporary file with results is recorded in case of 
+ script failure / loss of connection later.
+ Addresses and data are held in memory, so this script may need to be adjusted to process files line
+ by line if you are processing millions of entries.
+ Shane Lynn
+ 5th November 2016
+ """
+
+ import pandas as pd
+ import requests
+ import logging
+ import time
+
+ logger = logging.getLogger("root")
+ logger.setLevel(logging.DEBUG)
+ # create console handler
+ ch = logging.StreamHandler()
+ ch.setLevel(logging.DEBUG)
+ logger.addHandler(ch)
+
+ #------------------ CONFIGURATION -------------------------------
+
+ # Set your Google API key here. 
+ # Even if using the free 2500 queries a day, its worth getting an API key since the rate limit is 50 / second.
+ # With API_KEY = None, you will run into a 2 second delay every 10 requests or so.
+ # With a "Google Maps Geocoding API" key from https://console.developers.google.com/apis/, 
+ # the daily limit will be 2500, but at a much faster rate.
+ # Example: API_KEY = 'AIzaSyC9azed9tLdjpZNjg2_kVePWvMIBq154eA'
+ key_file = open("key.txt", "r")
+ key = key_file.readline().strip()
+ API_KEY = key
+ # Backoff time sets how many minutes to wait between google pings when your API limit is hit
+ BACKOFF_TIME = 30
+ # Set your output file name here.
+ output_filename = 'output_full_2018_19.csv'
+ # Set your input file here
+ input_filename = 'prop2018-19_todo.csv'
+ # Specify the column name in your input data that contains addresses here
+ address_column_name = "address"
+ # Return Full Google Results? If True, full JSON results from Google are included in output
+ RETURN_FULL_RESULTS = True
+
+ #------------------ DATA LOADING --------------------------------
+
+ # Read the data to a Pandas Dataframe
+ data = pd.read_csv(input_filename, encoding='utf8')
+
+ if address_column_name not in data.columns:
+	 raise ValueError("Missing Address column in input data")
+
+ # Form a list of addresses for geocoding:
+ # Make a big list of all of the addresses to be processed.
+ addresses = data[address_column_name].tolist()
+
+ # **** DEMO DATA / IRELAND SPECIFIC! ****
+ # We know that these addresses are in Ireland, and there's a column for county, so add this for accuracy. 
+ # (remove this line / alter for your own dataset)
+ addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+
+
+ #------------------	FUNCTION DEFINITIONS ------------------------
+
+ def get_google_results(address, api_key=None, return_full_response=False):
+     """
+     Get geocode results from Google Maps Geocoding API.
+    
+     Note, that in the case of multiple google geocode reuslts, this function returns details of the FIRST result.
+    
+     @param address: String address as accurate as possible. For Example "18 Grafton Street, Dublin, Ireland"
+     @param api_key: String API key if present from google. 
+                     If supplied, requests will use your allowance from the Google API. If not, you
+                     will be limited to the free usage of 2500 requests per day.
+     @param return_full_response: Boolean to indicate if you'd like to return the full response from google. This
+                     is useful if you'd like additional location details for storage or parsing later.
+     """
+     # Set up your Geocoding url
+     geocode_url = "https://maps.googleapis.com/maps/api/geocode/json?address={}".format(address)
+     if api_key is not None:
+         geocode_url = geocode_url + "&key={}".format(api_key)
+        
+     # Ping google for the reuslts:
+     results = requests.get(geocode_url)
+     # Results will be in JSON format - convert to dict using requests functionality
+     results = results.json()
+    
+     # if there's no results or an error, return empty results.
+     if len(results['results']) == 0:
+         output = {
+             "formatted_address" : None,
+             "latitude": None,
+             "longitude": None,
+             "accuracy": None,
+             "google_place_id": None,
+             "type": None,
+             "postcode": None
+         }
+     else:    
+         answer = results['results'][0]
+         output = {
+             "formatted_address" : answer.get('formatted_address'),
+             "latitude": answer.get('geometry').get('location').get('lat'),
+             "longitude": answer.get('geometry').get('location').get('lng'),
+             "accuracy": answer.get('geometry').get('location_type'),
+             "google_place_id": answer.get("place_id"),
+             "type": ",".join(answer.get('types')),
+             "postcode": ",".join([x['long_name'] for x in answer.get('address_components') 
+                                   if 'postal_code' in x.get('types')])
+         }
+        
+     # Append some other details:    
+     output['input_string'] = address
+     output['number_of_results'] = len(results['results'])
+     output['status'] = results.get('status')
+     if return_full_response is True:
+         output['response'] = results
+    
+     return output
+
+ #------------------ PROCESSING LOOP -----------------------------
+
+ # Ensure, before we start, that the API key is ok/valid, and internet access is ok
+ test_result = get_google_results("London, England", API_KEY, RETURN_FULL_RESULTS)
+ if (test_result['status'] != 'OK') or (test_result['formatted_address'] != 'London, UK'):
+     logger.warning("There was an error when testing the Google Geocoder.")
+     raise ConnectionError('Problem with test results from Google Geocode - check your API key and internet connection.')
+
+ # Create a list to hold results
+ results = []
+ # Go through each address in turn
+ for address in addresses:
+     # While the address geocoding is not finished:
+     geocoded = False
+     while geocoded is not True:
+         # Geocode the address with google
+         try:
+             geocode_result = get_google_results(address, API_KEY, return_full_response=RETURN_FULL_RESULTS)
+         except Exception as e:
+             logger.exception(e)
+             logger.error("Major error with {}".format(address))
+             logger.error("Skipping!")
+             geocoded = True
+            
+         # If we're over the API limit, backoff for a while and try again later.
+         if geocode_result['status'] == 'OVER_QUERY_LIMIT':
+             logger.info("Hit Query Limit! Backing off for a bit.")
+             time.sleep(BACKOFF_TIME * 60) # sleep for 30 minutes
+             geocoded = False
+         else:
+             # If we're ok with API use, save the results
+             # Note that the results might be empty / non-ok - log this
+             if geocode_result['status'] != 'OK':
+                 logger.warning("Error geocoding {}: {}".format(address, geocode_result['status']))
+             logger.debug("Geocoded: {}: {}".format(address, geocode_result['status']))
+             results.append(geocode_result)           
+             geocoded = True
+
+     # Print status every 100 addresses
+     if len(results) % 100 == 0:
+    	 logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+            
+     # Every 500 addresses, save progress to file(in case of a failure so you have something!)
+     if len(results) % 500 == 0:
+         pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+         print("saved {r} results to file".format(r=len(results)))
+     if len(results) % 10000 == 0:
+             pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+ #All done
+ logger.info("Finished geocoding all addresses")
+ # Write the full results to csv using the pandas library.
+ pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+#+END_SRC
+* Footnotes
+
+[fn:6] stuff always breaks, it's better to make your peace with it. 
+
+[fn:5] if you've been paying careful attention, you'll note that our
+original script hasn't changed yet
+
+[fn:4] if you have never read this book and you need to deal with
+non-trivial code, you owe it to yourself to go read it *right now*
+
+[fn:3] obviously, this threshold will be different for everyone
+
+[fn:2] over time, the probability of an irish data scientist examining
+this data converges towards one. 
+
+[fn:1] i.e. since I decided to buy a house
