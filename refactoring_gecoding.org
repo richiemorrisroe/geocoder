@@ -535,6 +535,15 @@ parser.add_argument("--return_full_results", type=bool, help="return full result
 args = parser.parse_args()
 #+END_SRC
 
+#+begin_src sh 
+  python geocoder_new.py
+  --input_file=input_sample_data_one.csv //
+  --output_file=output_sample_data_one.csv //
+  --address_column=address 
+#+end_src
+
+We can run our new script as above. 
+
 
 
 
@@ -749,17 +758,6 @@ args = parser.parse_args()
   # key = key_file.readline().strip()
   key = get_api_key("key.txt")
   API_KEY = key
-
-  # # Backoff time sets how many minutes to wait between google pings when your API limit is hit
-  # BACKOFF_TIME = 30
-  # # Set your output file name here.
-  # output_filename = 'output_full_2018_19.csv'
-  # # Set your input file here
-  # input_filename = 'input_sample_data_one.csv'
-  # # Specify the column name in your input data that contains addresses here
-  # address_column_name = "address"
-  # # Return Full Google Results? If True, full JSON results from Google are included in output
-  # RETURN_FULL_RESULTS = True
 
   BACKOFF_TIME = args.backoff_time
   # Set your output file name here.
