@@ -3,12 +3,14 @@ import requests
 import logging
 import time
 from geocode.geocode_funcs import create_logger, get_api_key
-# logger = logging.getLogger("root")
-# logger.setLevel(logging.DEBUG)
-# # create console handler
-# ch = logging.StreamHandler()
-# ch.setLevel(logging.DEBUG)
-# logger.addHandler(ch)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
+parser.add_argument("--input_file", type=str, help="input file containing addresses", default=None)
+parser.add_argument("--output_file", type=str, help="file to output geocoded results too", default=None)
+parser.add_argument("--address_column", type=str, help="column name with addresses", default=None)
+parser.add_argument("--return_full_results", type=bool, help="return full results?", default=True)
+args = parser.parse_args()
 logger = create_logger()
 
 #------------------ CONFIGURATION -------------------------------
@@ -19,19 +21,31 @@ logger = create_logger()
 # With a "Google Maps Geocoding API" key from https://console.developers.google.com/apis/, 
 # the daily limit will be 2500, but at a much faster rate.
 # Example: API_KEY = 'AIzaSyC9azed9tLdjpZNjg2_kVePWvMIBq154eA'
-key_file = open("key.txt", "r")
-key = key_file.readline().strip()
+# key_file = open("key.txt", "r")
+# key = key_file.readline().strip()
+key = get_api_key("key.txt")
 API_KEY = key
-# Backoff time sets how many minutes to wait between google pings when your API limit is hit
-BACKOFF_TIME = 30
+
+# # Backoff time sets how many minutes to wait between google pings when your API limit is hit
+# BACKOFF_TIME = 30
+# # Set your output file name here.
+# output_filename = 'output_full_2018_19.csv'
+# # Set your input file here
+# input_filename = 'input_sample_data_one.csv'
+# # Specify the column name in your input data that contains addresses here
+# address_column_name = "address"
+# # Return Full Google Results? If True, full JSON results from Google are included in output
+# RETURN_FULL_RESULTS = True
+
+BACKOFF_TIME = args.backoff_time
 # Set your output file name here.
-output_filename = 'output_full_2018_19.csv'
+output_filename = args.output_file
 # Set your input file here
-input_filename = 'input_sample_data_one.csv'
+input_filename = args.input_file
 # Specify the column name in your input data that contains addresses here
-address_column_name = "address"
+address_column_name = args.address_column
 # Return Full Google Results? If True, full JSON results from Google are included in output
-RETURN_FULL_RESULTS = True
+RETURN_FULL_RESULTS = args.return_full_results
 
 #------------------ DATA LOADING --------------------------------
 

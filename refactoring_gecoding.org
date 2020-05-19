@@ -502,6 +502,41 @@ we noted that we'd need to put these at the top level of our script
 in order to make them work. Therefore, we need to create new file,
 called *geocoder_new.py*. 
 
+Next, we need to add some options. 
+
+#+BEGIN_SRC python
+BACKOFF_TIME = 30
+ # Set your output file name here.
+ output_filename = 'output_full_2018_19.csv'
+ # Set your input file here
+ input_filename = 'prop2018-19_todo.csv'
+ # Specify the column name in your input data that contains addresses here
+ address_column_name = "address"
+ # Return Full Google Results? If True, full JSON results from Google are included in output
+ RETURN_FULL_RESULTS = True
+#+END_SRC
+
+So we have five options to add. The first, backoff time is kinda irrelevant now
+that Google charge you for each request (not each request over a quota). We'll
+leave it as part of the script for now, but it's definitely worth removing
+once we have more tests in place. We need output and input filenames, definitely,
+and the address_column_name is also important. These are all strings, which
+is the default datatype returned by argparse, so that's nice. Finally we
+have return_full_results, which is a boolean. 
+
+#+BEGIN_SRC python :results none
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
+parser.add_argument("--input_file", type=str, help="input file containing addresses", default=None)
+parser.add_argument("--output_file", type=str, help="file to output geocoded results too", default=None)
+parser.add_argument("--address_column", type=str, help="column name with addresses", default=None)
+parser.add_argument("--return_full_results", type=bool, help="return full results?", default=True)
+args = parser.parse_args()
+#+END_SRC
+
+
+
 
 * Full scripts :noexport:
 ** Original Script
@@ -692,6 +727,14 @@ called *geocoder_new.py*.
   import logging
   import time
   from geocode.geocode_funcs import create_logger, get_api_key
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
+  parser.add_argument("--input_file", type=str, help="input file containing addresses", default=None)
+  parser.add_argument("--output_file", type=str, help="file to output geocoded results too", default=None)
+  parser.add_argument("--address_column", type=str, help="column name with addresses", default=None)
+  parser.add_argument("--return_full_results", type=bool, help="return full results?", default=True)
+  args = parser.parse_args()
   logger = create_logger()
 
   #------------------ CONFIGURATION -------------------------------
@@ -702,19 +745,31 @@ called *geocoder_new.py*.
   # With a "Google Maps Geocoding API" key from https://console.developers.google.com/apis/, 
   # the daily limit will be 2500, but at a much faster rate.
   # Example: API_KEY = 'AIzaSyC9azed9tLdjpZNjg2_kVePWvMIBq154eA'
-  key_file = open("key.txt", "r")
-  key = key_file.readline().strip()
+  # key_file = open("key.txt", "r")
+  # key = key_file.readline().strip()
+  key = get_api_key("key.txt")
   API_KEY = key
-  # Backoff time sets how many minutes to wait between google pings when your API limit is hit
-  BACKOFF_TIME = 30
+
+  # # Backoff time sets how many minutes to wait between google pings when your API limit is hit
+  # BACKOFF_TIME = 30
+  # # Set your output file name here.
+  # output_filename = 'output_full_2018_19.csv'
+  # # Set your input file here
+  # input_filename = 'input_sample_data_one.csv'
+  # # Specify the column name in your input data that contains addresses here
+  # address_column_name = "address"
+  # # Return Full Google Results? If True, full JSON results from Google are included in output
+  # RETURN_FULL_RESULTS = True
+
+  BACKOFF_TIME = args.backoff_time
   # Set your output file name here.
-  output_filename = 'output_full_2018_19.csv'
+  output_filename = args.output_file
   # Set your input file here
-  input_filename = 'input_sample_data_one.csv'
+  input_filename = args.input_file
   # Specify the column name in your input data that contains addresses here
-  address_column_name = "address"
+  address_column_name = args.address_column
   # Return Full Google Results? If True, full JSON results from Google are included in output
-  RETURN_FULL_RESULTS = True
+  RETURN_FULL_RESULTS = args.return_full_results
 
   #------------------ DATA LOADING --------------------------------
 
