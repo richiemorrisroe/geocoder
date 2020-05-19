@@ -39,9 +39,9 @@ API_KEY = key
 # Backoff time sets how many minutes to wait between google pings when your API limit is hit
 BACKOFF_TIME = 30
 # Set your output file name here.
-output_filename = 'output_full_2018_19.csv'
+output_filename = 'output_sample_data2.csv'
 # Set your input file here
-input_filename = 'prop2018-19_todo.csv'
+input_filename = 'input_sample_data.csv'
 # Specify the column name in your input data that contains addresses here
 address_column_name = "address"
 # Return Full Google Results? If True, full JSON results from Google are included in output

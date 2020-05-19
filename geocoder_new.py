@@ -1,29 +1,15 @@
-"""
-Python script for batch geocoding of addresses using the Google Geocoding API.
-This script allows for massive lists of addresses to be geocoded for free by pausing when the 
-geocoder hits the free rate limit set by Google (2500 per day).  If you have an API key for paid
-geocoding from Google, set it in the API key section.
-Addresses for geocoding can be specified in a list of strings "addresses". In this script, addresses
-come from a csv file with a column "Address". Adjust the code to your own requirements as needed.
-After every 500 successul geocode operations, a temporary file with results is recorded in case of 
-script failure / loss of connection later.
-Addresses and data are held in memory, so this script may need to be adjusted to process files line
-by line if you are processing millions of entries.
-Shane Lynn
-5th November 2016
-"""
-
 import pandas as pd
 import requests
 import logging
 import time
-
-logger = logging.getLogger("root")
-logger.setLevel(logging.DEBUG)
-# create console handler
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-logger.addHandler(ch)
+from geocode.geocode_funcs import create_logger, get_api_key
+# logger = logging.getLogger("root")
+# logger.setLevel(logging.DEBUG)
+# # create console handler
+# ch = logging.StreamHandler()
+# ch.setLevel(logging.DEBUG)
+# logger.addHandler(ch)
+logger = create_logger()
 
 #------------------ CONFIGURATION -------------------------------
 
@@ -41,7 +27,7 @@ BACKOFF_TIME = 30
 # Set your output file name here.
 output_filename = 'output_full_2018_19.csv'
 # Set your input file here
-input_filename = 'prop2018-19_todo.csv'
+input_filename = 'input_sample_data_one.csv'
 # Specify the column name in your input data that contains addresses here
 address_column_name = "address"
 # Return Full Google Results? If True, full JSON results from Google are included in output
@@ -53,7 +39,7 @@ RETURN_FULL_RESULTS = True
 data = pd.read_csv(input_filename, encoding='utf8')
 
 if address_column_name not in data.columns:
-	raise ValueError("Missing Address column in input data")
+        raise ValueError("Missing Address column in input data")
 
 # Form a list of addresses for geocoding:
 # Make a big list of all of the addresses to be processed.
@@ -163,7 +149,7 @@ for address in addresses:
 
     # Print status every 100 addresses
     if len(results) % 100 == 0:
-    	logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+        logger.info("Completed {} of {} address".format(len(results), len(addresses)))
 
     # Every 500 addresses, save progress to file(in case of a failure so you have something!)
     if len(results) % 500 == 0:
