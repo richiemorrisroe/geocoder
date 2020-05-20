@@ -1,5 +1,4 @@
 import pandas as pd
-import requests
 import logging
 import time
 from geocode.geocode_funcs import create_logger, get_api_key, get_google_results

@@ -1,4 +1,6 @@
 import logging
+import requests
+
 def create_logger():
     logger = logging.getLogger("root")
     logger.setLevel(logging.DEBUG)
