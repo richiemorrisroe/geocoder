@@ -81,3 +81,12 @@ def read_results_from_pickle(filename):
     with open(filename, 'rb') as f:
         res = pickle.load(f)
     return res
+
+def log_progress_and_results(results, logger, addresses, output_filename) -> None:
+    if len(results) % 100 == 0:
+        logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+    if len(results) % 500 == 0:
+        pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+        print("saved {r} results to file".format(r=len(results)))
+    if len(results) % 10000 == 0:
+        pd.DataFrame(results).to_csv(output_filename, encoding='utf8')

@@ -25,3 +25,22 @@ def test_full_results():
                                            return_full_response = True)
     old_full = read_results_from_pickle('full_kilcanway.pkl')
     assert kilcanway_full == old_full
+
+import pandas as pd
+from pathlib import Path
+import os
+from geocode_funcs import create_logger, log_progress_and_results
+resource_path = "/home/richie/Dropbox/Code/Python/geocoder" 
+output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
+output_data_100 = output_data.iloc[0:100,]
+output_data_500 = output_data.iloc[0:500,]
+output_data_10k = output_data
+output_filename = "test_output_file.csv"
+logger = create_logger()
+def test_output_data_exists():
+    assert output_data is not None
+
+def test_output_length_100(caplog) -> None:
+    log_progress_and_results(output_data_100, logger, output_data_100[["addresses"]],
+                             output_filename)
+    assert 'Completed 100 of 100 address' in caplog.text

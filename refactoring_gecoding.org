@@ -689,8 +689,166 @@ I really only created these functions
 Some copying and creation of files later, we have some tests. 
 
 We probably also need a test to make sure that we break if there's 
-no API key. 
+no API key, but again, we'll leave that for now.
+** Reviewing where we are
 
+Let's look at our new geocoding script in all its glory.
+
+The first thing that stands out is the presence of a test inlined
+in the code. We can easily move this to be part of our automated
+testing suite, with a few small changes. We note this down,
+and continue reviewing the script. 
+
+#+begin_src python
+  import pandas as pd
+  import logging
+  import time
+  from geocode.geocode_funcs import create_logger, get_api_key, get_google_results
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
+  parser.add_argument("--input_file", type=str, help="input file containing addresses", default=None)
+  parser.add_argument("--output_file", type=str, help="file to output geocoded results too", default=None)
+  parser.add_argument("--address_column", type=str, help="column name with addresses", default=None)
+  parser.add_argument("--return_full_results", type=bool, help="return full results?", default=True)
+  args = parser.parse_args()
+  logger = create_logger()
+
+  key = get_api_key("key.txt")
+  API_KEY = key
+
+  BACKOFF_TIME = args.backoff_time
+  # Set your output file name here.
+  output_filename = args.output_file
+  # Set your input file here
+  input_filename = args.input_file
+  # Specify the column name in your input data that contains addresses here
+  address_column_name = args.address_column
+  # Return Full Google Results? If True, full JSON results from Google are included in output
+  RETURN_FULL_RESULTS = args.return_full_results
+
+  #------------------ DATA LOADING --------------------------------
+
+  # Read the data to a Pandas Dataframe
+  data = pd.read_csv(input_filename, encoding='utf8')
+
+  if address_column_name not in data.columns:
+          raise ValueError("Missing Address column in input data")
+
+  # Form a list of addresses for geocoding:
+  # Make a big list of all of the addresses to be processed.
+  addresses = data[address_column_name].tolist()
+
+  # **** DEMO DATA / IRELAND SPECIFIC! ****
+  # We know that these addresses are in Ireland, and there's a column for county, so add this for accuracy. 
+  # (remove this line / alter for your own dataset)
+  addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+
+
+
+  #------------------ PROCESSING LOOP -----------------------------
+
+  # Ensure, before we start, that the API key is ok/valid, and internet access is ok
+  test_result = get_google_results("London, England", API_KEY, RETURN_FULL_RESULTS)
+  if (test_result['status'] != 'OK') or (test_result['formatted_address'] != 'London, UK'):
+      logger.warning("There was an error when testing the Google Geocoder.")
+      raise ConnectionError('Problem with test results from Google Geocode - check your API key and internet connection.')
+
+  # Create a list to hold results
+  results = []
+  # Go through each address in turn
+  for address in addresses:
+      # While the address geocoding is not finished:
+      geocoded = False
+      while geocoded is not True:
+          # Geocode the address with google
+          try:
+              geocode_result = get_google_results(address, API_KEY, return_full_response=RETURN_FULL_RESULTS)
+          except Exception as e:
+              logger.exception(e)
+              logger.error("Major error with {}".format(address))
+              logger.error("Skipping!")
+              geocoded = True
+
+          # If we're over the API limit, backoff for a while and try again later.
+          if geocode_result['status'] == 'OVER_QUERY_LIMIT':
+              logger.info("Hit Query Limit! Backing off for a bit.")
+              time.sleep(BACKOFF_TIME * 60) # sleep for 30 minutes
+              geocoded = False
+          else:
+              # If we're ok with API use, save the results
+              # Note that the results might be empty / non-ok - log this
+              if geocode_result['status'] != 'OK':
+                  logger.warning("Error geocoding {}: {}".format(address, geocode_result['status']))
+              logger.debug("Geocoded: {}: {}".format(address, geocode_result['status']))
+              results.append(geocode_result)           
+              geocoded = True
+
+      # Print status every 100 addresses
+      if len(results) % 100 == 0:
+          logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+
+      # Every 500 addresses, save progress to file(in case of a failure so you have something!)
+      if len(results) % 500 == 0:
+          pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+          print("saved {r} results to file".format(r=len(results)))
+      if len(results) % 10000 == 0:
+              pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+  #All done
+  logger.info("Finished geocoding all addresses")
+  # Write the full results to csv using the pandas library.
+  pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+#+end_src
+
+So, most of the core loop is fine, in that I can't see an easy
+way to break it into functions. However, the one part that
+looks reasonably self contained is the logging of results
+to stdout and/or a dataframe. I don't particularly like
+the overwriting, but I can live with it. 
+
+#+begin_src python :tangle geocode/geocode_funcs.py
+def log_progress_and_results(results, logger, addresses, output_filename) -> None:
+    if len(results) % 100 == 0:
+        logger.info("Completed {} of {} address".format(len(results), len(addresses)))
+    if len(results) % 500 == 0:
+        pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+        print("saved {r} results to file".format(r=len(results)))
+    if len(results) % 10000 == 0:
+        pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+#+end_src
+
+This function is a little tricky to test, in that it has different behaviour
+depending on the length of results. To test this, we'll need DF's of particular
+lengths. We'll also need to remove an accumulation of files which will
+build up as a result of the tests. 
+
+The easiest thing to do here is to read in our full output data, and
+subset it to be the correct length, and write tests around that. 
+
+I /think/ that I could use pytest fixtures to do this, but in the
+interests of finishing this article today, I'll leave that for now. 
+
+#+begin_src python :tangle geocode/tests/test_google.py
+  import pandas as pd
+  from pathlib import Path
+  import os
+  from geocode_funcs import create_logger, log_progress_and_results
+  resource_path = "/home/richie/Dropbox/Code/Python/geocoder" 
+  output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
+  output_data_100 = output_data.iloc[0:100,]
+  output_data_500 = output_data.iloc[0:500,]
+  output_data_10k = output_data
+  output_filename = "test_output_file.csv"
+  logger = create_logger()
+  def test_output_data_exists():
+      assert output_data is not None
+
+  def test_output_length_100(caplog) -> None:
+      log_progress_and_results(output_data_100, logger, output_data_100[["addresses"]],
+                               output_filename)
+      assert 'Completed 100 of 100 address' in caplog.text
+
+#+end_src
 
 * Full scripts :noexport:
 ** Original Script
