@@ -652,9 +652,9 @@ purpose, as it's standard and reasonably simple.
 The way python handles files bugs me normally, so we'll
 write a wrapper around the with statement dance we need. 
 
-#+begin_src python 
+#+begin_src python :tangle geocode/geocode_funcs.py
+  import pickle
   def write_results_to_pickle(results, filename):
-      import pickle
       with open(filename, 'wb') as f:
           pickle.dump(results, f)
 
@@ -664,21 +664,23 @@ write a wrapper around the with statement dance we need.
       return res
 #+end_src
 
+I really only created these functions
+
 
 #+begin_src python :tangle geocode/tests/test_google.py
   from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
-  key = get_api_key('~/Dropbox/Code/Python/geocoder/key.txt')
+  key = get_api_key('/home/richie/Dropbox/Code/Python/geocoder/key.txt')
   def test_nonfull_results():
       kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
                                              api_key = key,
-                                             return_full_results = False)
+                                             return_full_response = False)
       oldnon_full = read_results_from_pickle('nonfull_kilcanway.pkl')
       assert kilcanway_nonfull == oldnon_full
 
   def test_full_results():
       kilcanway_full = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
                                              api_key = key,
-                                             return_full_results = True)
+                                             return_full_response = True)
       old_full = read_results_from_pickle('full_kilcanway.pkl')
       assert kilcanway_full == old_full    
 

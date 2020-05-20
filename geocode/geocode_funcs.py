@@ -71,3 +71,13 @@ def get_google_results(address, api_key=None, return_full_response=False):
         output['response'] = results
 
     return output
+
+import pickle
+def write_results_to_pickle(results, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(results, f)
+
+def read_results_from_pickle(filename):
+    with open(filename, 'rb') as f:
+        res = pickle.load(f)
+    return res
