@@ -17,16 +17,13 @@ def get_api_key(path) -> str:
 
 def get_google_results(address, api_key=None, return_full_response=False):
     """Get geocode results from Google Maps Geocoding API.
-
     Note, that in the case of multiple google geocode reuslts, 
     this function returns details of the FIRST result.
-
     @param address: String address as accurate as possible. For
     Example "18 Grafton Street, Dublin, Ireland" 
     @param api_key:
-    String API key if present from google.  If supplied, requests will
-    use your allowance from the Google API. If not, you will be
-    limited to the free usage of 2500 requests per day.  @param
+    String API key for Google Maps Platform
+    @param
     return_full_response: Boolean to indicate if you'd like to return
     the full response from google. This is useful if you'd like
     additional location details for storage or parsing later.
