@@ -61,4 +61,4 @@ def test_output_length_10000() -> None:
                              logger,
                              output_data_10k.input_string,
                              output_filename)
-    assert os.path.exists(output_filename + '.csv')
+    assert os.path.exists(output_filename)

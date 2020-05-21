@@ -153,7 +153,8 @@ for address in addresses:
             results.append(geocode_result)           
             geocoded = True
 
-    # Print status every 100 addresses
+    #Print status every 100 addresses
+    log_progress_and_results(results, logger, addresses, output_filename)
     if len(results) % 100 == 0:
         logger.info("Completed {} of {} address".format(len(results), len(addresses)))
 

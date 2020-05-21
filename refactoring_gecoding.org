@@ -864,8 +864,13 @@ interests of finishing this article today, I'll leave that for now.
                                logger,
                                output_data_10k.input_string,
                                output_filename)
-      assert os.path.exists(output_filename + '.csv')
+      assert os.path.exists(output_filename)
 #+end_src
+
+We run the tests, make sure they are still working. 
+
+They are, so we can update the script and run again
+to make sure nothing unexpected has broken. 
 
 * Full scripts :noexport:
 ** Original Script
@@ -1205,8 +1210,9 @@ interests of finishing this article today, I'll leave that for now.
               logger.debug("Geocoded: {}: {}".format(address, geocode_result['status']))
               results.append(geocode_result)           
               geocoded = True
-
-      # Print status every 100 addresses
+            
+      #Print status every 100 addresses
+      log_progress_and_results(results, logger, addresses, output_filename)
       if len(results) % 100 == 0:
           logger.info("Completed {} of {} address".format(len(results), len(addresses)))
 
