@@ -55,3 +55,10 @@ def test_output_length_500() -> None:
                              output_data_500.input_string,
                              output_filename)
     assert os.path.exists(output_filename + '_bak')
+
+def test_output_length_10000() -> None:
+    log_progress_and_results(output_data_10k,
+                             logger,
+                             output_data_10k.input_string,
+                             output_filename)
+    assert os.path.exists(output_filename + '.csv')
