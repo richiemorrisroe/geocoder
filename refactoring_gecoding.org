@@ -100,7 +100,7 @@ mutated or used in multiple places further on.
 #+BEGIN_SRC python :tangle geocode/geocode_funcs.py
   import logging
   import requests
-
+  import pandas as pd
   def create_logger():
       logger = logging.getLogger("root")
       logger.setLevel(logging.DEBUG)
@@ -840,14 +840,24 @@ interests of finishing this article today, I'll leave that for now.
   output_data_10k = output_data
   output_filename = "test_output_file.csv"
   logger = create_logger()
+
+
   def test_output_data_exists():
       assert output_data is not None
 
+
   def test_output_length_100(caplog) -> None:
-      log_progress_and_results(output_data_100, logger, output_data_100[["addresses"]],
+      log_progress_and_results(output_data_100, logger, output_data_100.input_string,
                                output_filename)
       assert 'Completed 100 of 100 address' in caplog.text
 
+
+  def test_output_length_500() -> None:
+      log_progress_and_results(output_data_500,
+                               logger,
+                               output_data_500.input_string,
+                               output_filename)
+      assert os.path.exists(output_filename + '_bak')
 #+end_src
 
 * Full scripts :noexport:

@@ -37,10 +37,21 @@ output_data_500 = output_data.iloc[0:500,]
 output_data_10k = output_data
 output_filename = "test_output_file.csv"
 logger = create_logger()
+
+
 def test_output_data_exists():
     assert output_data is not None
 
+
 def test_output_length_100(caplog) -> None:
-    log_progress_and_results(output_data_100, logger, output_data_100[["addresses"]],
+    log_progress_and_results(output_data_100, logger, output_data_100.input_string,
                              output_filename)
     assert 'Completed 100 of 100 address' in caplog.text
+
+
+def test_output_length_500() -> None:
+    log_progress_and_results(output_data_500,
+                             logger,
+                             output_data_500.input_string,
+                             output_filename)
+    assert os.path.exists(output_filename + '_bak')

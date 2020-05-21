@@ -1,6 +1,6 @@
 import logging
 import requests
-
+import pandas as pd
 def create_logger():
     logger = logging.getLogger("root")
     logger.setLevel(logging.DEBUG)
