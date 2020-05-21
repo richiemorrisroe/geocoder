@@ -872,6 +872,39 @@ We run the tests, make sure they are still working.
 They are, so we can update the script and run again
 to make sure nothing unexpected has broken. 
 
+At this point, we're pretty much done (for now). 
+
+
+
+Additionally, at this point I can now really easily update my script,
+and even automate updating the database. 
+* Conclusions
+
+However, I probably want to start changing things at this point.
+
+A few obvious extensions which would be relatively easy:
+- apply approach to different country/dataset
+- Add caching to script to prevent querying google if we already have
+  a result (for resales)
+- Write to a database instead of a flat file. 
+
+Consider the possibility of writing to a DB. We can now just bundle
+all the logic up into log_progress_and_results and the rest of the
+code doesn't need to care. We'll need to update the tests, and
+it would probably be worth adding an option so that we can
+still output to a flat file if necessary, but this is much
+easier than before.
+
+The different country or dataset is a little tricker, because we
+haven't abstracted the logic for addresses into a function. 
+
+Additionally, it would be good to add a function for the main
+loop, but that's lower value for now, as I can easily run
+my new geocoder script on new data, which was the purpose 
+of my refactoring in the first place. 
+
+I j
+
 * Full scripts :noexport:
 ** Original Script
 
@@ -1170,6 +1203,8 @@ to make sure nothing unexpected has broken.
 #+RESULTS:
 
 * Footnotes
+
+
 
 [fn:10] also, why do people name things output? It just seems like such a bizarre choice of name 
 
