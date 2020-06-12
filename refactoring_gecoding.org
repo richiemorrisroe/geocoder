@@ -45,8 +45,9 @@ we'll review each piece of the script, and assess what would
 make it more maintainable, or at least more maintainable. 
 
 I'll reference particular refactorings from the book of the same
-name [fn:4]. These have a number associated with them, which
-is the page number from the 2nd edition. 
+name [fn:4]. 
+# These have a number associated with them, which
+# is the page number from the 2nd edition. 
 
 ** Introduction & Imports
 
@@ -390,8 +391,7 @@ tests.
 
 Normally what I'd do here is use some kind of dataframe equality
 method on the outputs. We save our original output under a particular
-name (I'm a fan of output_old, myself) and then we rerun the process
-that generates the script. 
+name and then we rerun the process that generates the script.
 
 Pandas has a df.equals method, so hopefully this will _just work_. 
 
@@ -431,7 +431,7 @@ We wouldn't expect these to change over time (unless Google start identifying
 addresses better at some point), and they are numeric and thus less error-prone
 to compare (after accounting for the vagaries of float and rounding methods). 
 
-#+BEGIN_SRC python :session
+#+BEGIN_SRC python :session :exports results
   latlong_check = output_check[["latitude", "longitude"]]
   latlong_old = output_old[["latitude", "longitude"]]
   latlong_check.equals(latlong_old)
@@ -442,7 +442,7 @@ to compare (after accounting for the vagaries of float and rounding methods).
 
 Still false. Odd, let's look at the data to see what's going on here. 
 
-#+BEGIN_SRC python :session
+#+BEGIN_SRC python :session :exports results
 latlong_check.head()
 #+END_SRC
 
@@ -453,7 +453,7 @@ latlong_check.head()
 : 2  51.687483  -8.572435
 : 3  52.210920  -6.564558
 
-#+BEGIN_SRC python :session
+#+BEGIN_SRC python :session :exports results
 latlong_old.head()
 #+END_SRC
 
@@ -649,7 +649,7 @@ In order to do this, we need to write a function that
 saves our results in some format. We'll use *pickle* for this
 purpose, as it's standard and reasonably simple. 
 
-The way python handles files bugs me normally, so we'll
+The way python handles files bugs me normally [fn:11], so we'll
 write a wrapper around the with statement dance we need. 
 
 #+begin_src python :tangle geocode/geocode_funcs.py
@@ -664,7 +664,7 @@ write a wrapper around the with statement dance we need.
       return res
 #+end_src
 
-I really only created these functions
+
 
 
 #+begin_src python :tangle geocode/tests/test_google.py
@@ -1203,6 +1203,8 @@ I j
 #+RESULTS:
 
 * Footnotes
+
+[fn:11] the with dance, though explicit, I find incredibly tedious 
 
 
 
