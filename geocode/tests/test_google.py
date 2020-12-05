@@ -11,7 +11,7 @@ def test_get_api_key() -> None:
     assert isinstance(apikey, str)
 
 from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
-key = get_api_key('/home/richie/Dropbox/Code/Python/geocoder/key.txt')
+key = get_api_key('/home/richie/geocoder/key.txt')
 def test_nonfull_results():
     kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
                                            api_key = key,
@@ -30,7 +30,7 @@ import pandas as pd
 from pathlib import Path
 import os
 from geocode_funcs import create_logger, log_progress_and_results
-resource_path = "/home/richie/Dropbox/Code/Python/geocoder" 
+resource_path = "/home/richie/geocoder" 
 output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
 output_data_100 = output_data.iloc[0:100,]
 output_data_500 = output_data.iloc[0:500,]
