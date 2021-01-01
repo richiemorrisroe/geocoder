@@ -11,7 +11,7 @@ def test_get_api_key() -> None:
     assert isinstance(apikey, str)
 
 from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
-key = get_api_key('/home/richie/geocoder/key.txt')
+key = get_api_key('key.txt')
 def test_nonfull_results():
     kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
                                            api_key = key,
@@ -62,3 +62,11 @@ def test_output_length_10000() -> None:
                              output_data_10k.input_string,
                              output_filename)
     assert os.path.exists(output_filename)
+
+from geocode_funcs import add_ireland_to_address
+
+input_data_sample = pd.read_csv("input_sample_data_one.csv")
+
+def test_add_ireland_to_address():
+    result = add_ireland_to_address(input_data_sample, "address")
+    assert result[0].endswith("Ireland")

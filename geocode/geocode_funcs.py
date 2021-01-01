@@ -90,3 +90,7 @@ def log_progress_and_results(results, logger, addresses, output_filename) -> Non
         print("saved {r} results to file".format(r=len(results)))
     if len(results) % 10000 == 0:
         pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+
+def add_ireland_to_address(df, address_column):
+    addresses = (df[address_column] + ',' + df['county'] + ',Ireland').tolist()
+    return addresses

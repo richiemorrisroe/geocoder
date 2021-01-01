@@ -669,7 +669,7 @@ write a wrapper around the with statement dance we need.
 
 #+begin_src python :tangle geocode/tests/test_google.py
   from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
-  key = get_api_key('/home/richie/Dropbox/Code/Python/geocoder/key.txt')
+  key = get_api_key('key.txt')
   def test_nonfull_results():
       kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
                                              api_key = key,
@@ -833,7 +833,7 @@ interests of finishing this article today, I'll leave that for now.
   from pathlib import Path
   import os
   from geocode_funcs import create_logger, log_progress_and_results
-  resource_path = "/home/richie/Dropbox/Code/Python/geocoder" 
+  resource_path = "/home/richie/geocoder" 
   output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
   output_data_100 = output_data.iloc[0:100,]
   output_data_500 = output_data.iloc[0:500,]
@@ -904,6 +904,38 @@ my new geocoder script on new data, which was the purpose
 of my refactoring in the first place. 
 
 I j
+* Part Two
+
+It turns out I need to actually join my original data to the geocoded data,
+and the best place to do that is here.
+
+Additionally, we want to add hashing so that we don't repeat work. 
+
+#+begin_src python 
+addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+#+end_src
+
+This is logic from geocoder script, which adds county and country to
+the input addresses (which may or may not have this already). 
+
+We can turn it into a function, so that we can call it more easily
+on other data (and test it). 
+
+#+begin_src python :tangle geocode/geocode_funcs.py
+  def add_ireland_to_address(df, address_column):
+      addresses = (df[address_column] + ',' + df['county'] + ',Ireland').tolist()
+      return addresses
+#+end_src
+
+#+begin_src python :tangle geocode/tests/test_google.py
+  from geocode_funcs import add_ireland_to_address
+
+  input_data_sample = pd.read_csv("input_sample_data_one.csv")
+
+  def test_add_ireland_to_address():
+      result = add_ireland_to_address(input_data_sample, "address")
+      assert result[0].endswith("Ireland")
+#+end_src
 
 * Full scripts :noexport:
 ** Original Script
