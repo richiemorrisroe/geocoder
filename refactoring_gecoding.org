@@ -196,9 +196,9 @@ Let's add it now.
 Again, this is just mostly mechanical. 
 
 The only real art to it is deciding what to break down, and what to
-name stuff. In general, making changes like this is dangerous,
-so you want to take a bunch of small steps and add tests, to 
-avoid causing more problems than you solve. 
+name stuff. In general, making changes like this is dangerous, so you
+want to take a bunch of small steps and add tests, to avoid causing
+more problems than you solve.
 
 
 
