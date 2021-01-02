@@ -703,7 +703,7 @@ and continue reviewing the script.
   import pandas as pd
   import logging
   import time
-  from geocode.geocode_funcs import create_logger, get_api_key, get_google_results
+  from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, add_ireland_to_address
   import argparse
   parser = argparse.ArgumentParser()
   parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
@@ -742,7 +742,8 @@ and continue reviewing the script.
   # **** DEMO DATA / IRELAND SPECIFIC! ****
   # We know that these addresses are in Ireland, and there's a column for county, so add this for accuracy. 
   # (remove this line / alter for your own dataset)
-  addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+  # addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+  addresses = add_ireland_to_address(data, address_column_name)
 
 
 
@@ -929,23 +930,30 @@ on other data (and test it).
 
 #+begin_src python :tangle geocode/tests/test_google.py
   from geocode.geocode_funcs import add_ireland_to_address
-  from geocode.join import join_input_and_output
+  from geocode.join import join_input_and_output, preprocess_raw_data_for_join
 
 
   input_data_sample = pd.read_csv("input_sample_data_one.csv")
   output_data_sample = pd.read_csv("output_sample_data_one.csv")
-
+  input_data_sample5 = pd.read_csv("input_sample_data.csv")
+  output_data_sample5 = pd.read_csv("output_sample_data.csv")
 
   def test_add_ireland_to_address():
       result = add_ireland_to_address(input_data_sample, "address")
       assert result[0].endswith("Ireland")
 
 
-  def test_join_input_and_output():
-      result_pp = preprocess_data_for_join(input_data_sample)
-      result_joined = join_input_and_output(input_data_sample, output_data_sample)
+  def test_join_input_and_output_one_row():
+      input_data_pp = preprocess_raw_data_for_join(input_data_sample, "address")
+      result_joined = join_input_and_output(input_data_pp, output_data_sample)
       assert result_joined.shape[0] == input_data_sample.shape[0]
       assert result_joined.shape[1] > input_data_sample.shape[1]
+
+  def test_join_input_and_output_five_rows():
+      input_data_pp = preprocess_raw_data_for_join(input_data_sample5, "address")
+      result_joined = join_input_and_output(input_data_pp, output_data_sample5)
+      assert result_joined.shape[0] == input_data_sample5.shape[0]
+      assert result_joined.shape[1] > input_data_sample5.shape[1]
 #+end_src
 
 #+begin_src python :tangle geocode/join.py
@@ -955,11 +963,14 @@ on other data (and test it).
   def preprocess_raw_data_for_join(df, address):
       """Takes the raw DF from the PPR and updates the address to match the
         format from the output data (i.e. input string)"""
-      df_done = add_ireland_to_address(df, address)
+      input_string = add_ireland_to_address(df, address)
+      df_done = df.copy()
+      df_done.loc[:,"input_string"] = input_string
       return df_done
 
-  def join_input_and_output():
-      pass
+  def join_input_and_output(input_df, output_df):
+      input_plus_output = input_df.join(output_df, lsuffix="_input", rsuffix="_output")
+      return input_plus_output
 #+end_src
 
 

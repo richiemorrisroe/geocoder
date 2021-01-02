@@ -64,20 +64,27 @@ def test_output_length_10000() -> None:
     assert os.path.exists(output_filename)
 
 from geocode.geocode_funcs import add_ireland_to_address
-from geocode.join import join_input_and_output
+from geocode.join import join_input_and_output, preprocess_raw_data_for_join
 
 
 input_data_sample = pd.read_csv("input_sample_data_one.csv")
 output_data_sample = pd.read_csv("output_sample_data_one.csv")
-
+input_data_sample5 = pd.read_csv("input_sample_data.csv")
+output_data_sample5 = pd.read_csv("output_sample_data.csv")
 
 def test_add_ireland_to_address():
     result = add_ireland_to_address(input_data_sample, "address")
     assert result[0].endswith("Ireland")
 
 
-def test_join_input_and_output():
-    result_pp = preprocess_data_for_join(input_data_sample)
-    result_joined = join_input_and_output(input_data_sample, output_data_sample)
+def test_join_input_and_output_one_row():
+    input_data_pp = preprocess_raw_data_for_join(input_data_sample, "address")
+    result_joined = join_input_and_output(input_data_pp, output_data_sample)
     assert result_joined.shape[0] == input_data_sample.shape[0]
     assert result_joined.shape[1] > input_data_sample.shape[1]
+
+def test_join_input_and_output_five_rows():
+    input_data_pp = preprocess_raw_data_for_join(input_data_sample5, "address")
+    result_joined = join_input_and_output(input_data_pp, output_data_sample5)
+    assert result_joined.shape[0] == input_data_sample5.shape[0]
+    assert result_joined.shape[1] > input_data_sample5.shape[1]
