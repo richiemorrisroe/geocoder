@@ -1,5 +1,5 @@
 import pytest
-from geocode_funcs import create_logger, get_api_key
+from geocode.geocode_funcs import create_logger, get_api_key
 
 def test_logger_is_created() -> None:
     logger = create_logger()
@@ -10,7 +10,7 @@ def test_get_api_key() -> None:
     apikey = get_api_key(path)
     assert isinstance(apikey, str)
 
-from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
+from geocode.geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
 key = get_api_key('key.txt')
 # def test_nonfull_results():
 #     kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
@@ -29,7 +29,7 @@ key = get_api_key('key.txt')
 import pandas as pd
 from pathlib import Path
 import os
-from geocode_funcs import create_logger, log_progress_and_results
+from geocode.geocode_funcs import create_logger, log_progress_and_results
 resource_path = "/home/richie/geocoder" 
 output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
 output_data_100 = output_data.iloc[0:100,]
@@ -63,10 +63,21 @@ def test_output_length_10000() -> None:
                              output_filename)
     assert os.path.exists(output_filename)
 
-from geocode_funcs import add_ireland_to_address
+from geocode.geocode_funcs import add_ireland_to_address
+from geocode.join import join_input_and_output
+
 
 input_data_sample = pd.read_csv("input_sample_data_one.csv")
+output_data_sample = pd.read_csv("output_sample_data_one.csv")
+
 
 def test_add_ireland_to_address():
     result = add_ireland_to_address(input_data_sample, "address")
     assert result[0].endswith("Ireland")
+
+
+def test_join_input_and_output():
+    result_pp = preprocess_data_for_join(input_data_sample)
+    result_joined = join_input_and_output(input_data_sample, output_data_sample)
+    assert result_joined.shape[0] == input_data_sample.shape[0]
+    assert result_joined.shape[1] > input_data_sample.shape[1]

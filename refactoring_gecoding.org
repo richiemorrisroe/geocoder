@@ -141,7 +141,7 @@ into the package, adding tests as we go.
 
 #+BEGIN_SRC python :tangle geocode/tests/test_google.py
 import pytest
-from geocode_funcs import create_logger, get_api_key
+from geocode.geocode_funcs import create_logger, get_api_key
 #+END_SRC
 
 #+BEGIN_SRC python :tangle geocode/tests/test_google.py
@@ -668,7 +668,7 @@ write a wrapper around the with statement dance we need.
 
 
 #+begin_src python :tangle geocode/tests/test_google.py
-  from geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
+  from geocode.geocode_funcs import get_google_results, get_api_key, read_results_from_pickle
   key = get_api_key('key.txt')
   # def test_nonfull_results():
   #     kilcanway_nonfull = get_google_results("Kilcanway, Mallow, Co. Cork, Ireland",
@@ -832,7 +832,7 @@ interests of finishing this article today, I'll leave that for now.
   import pandas as pd
   from pathlib import Path
   import os
-  from geocode_funcs import create_logger, log_progress_and_results
+  from geocode.geocode_funcs import create_logger, log_progress_and_results
   resource_path = "/home/richie/geocoder" 
   output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
   output_data_100 = output_data.iloc[0:100,]
@@ -928,14 +928,41 @@ on other data (and test it).
 #+end_src
 
 #+begin_src python :tangle geocode/tests/test_google.py
-  from geocode_funcs import add_ireland_to_address
+  from geocode.geocode_funcs import add_ireland_to_address
+  from geocode.join import join_input_and_output
+
 
   input_data_sample = pd.read_csv("input_sample_data_one.csv")
+  output_data_sample = pd.read_csv("output_sample_data_one.csv")
+
 
   def test_add_ireland_to_address():
       result = add_ireland_to_address(input_data_sample, "address")
       assert result[0].endswith("Ireland")
+
+
+  def test_join_input_and_output():
+      result_pp = preprocess_data_for_join(input_data_sample)
+      result_joined = join_input_and_output(input_data_sample, output_data_sample)
+      assert result_joined.shape[0] == input_data_sample.shape[0]
+      assert result_joined.shape[1] > input_data_sample.shape[1]
 #+end_src
+
+#+begin_src python :tangle geocode/join.py
+  from .geocode_funcs import add_ireland_to_address
+
+
+  def preprocess_raw_data_for_join(df, address):
+      """Takes the raw DF from the PPR and updates the address to match the
+        format from the output data (i.e. input string)"""
+      df_done = add_ireland_to_address(df, address)
+      return df_done
+
+  def join_input_and_output():
+      pass
+#+end_src
+
+
 
 * Full scripts :noexport:
 ** Original Script
