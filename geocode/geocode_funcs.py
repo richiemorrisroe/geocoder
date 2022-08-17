@@ -82,15 +82,23 @@ def read_results_from_pickle(filename):
         res = pickle.load(f)
     return res
 
-def log_progress_and_results(results, logger, addresses, output_filename) -> None:
+from geocode.join import join_input_and_output
+def log_progress_and_results(results, logger, addresses, output_filename, input_data) -> None:
+    # if len(results) % 6 == 0:
+    #       results_df = pd.DataFrame(results)
+    #       results_df_joined = join_input_and_output(input_data, results_df)
+    #       results_df_joined.to_csv("{}_bak".format(output_filename))
+    #       print("saved {r} results to file".format(r=len(results)))
     if len(results) % 100 == 0:
         logger.info("Completed {} of {} address".format(len(results), len(addresses)))
     if len(results) % 500 == 0:
-        pd.DataFrame(results).to_csv("{}_bak".format(output_filename))
+        results_df = pd.DataFrame(results)
+        results_df_joined = join_input_and_output(input_data, results_df)
+        results_df_joined.to_csv("{}_bak".format(output_filename))
         print("saved {r} results to file".format(r=len(results)))
     if len(results) % 10000 == 0:
+        results_df = pd.DataFrame(results)
+        results_df_joined = join_input_and_output(input_data, results_df)
+        results_df_joined.to_csv(output_filename)
+        print("saved {r} results to file".format(r=len(results)))
         pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
-
-def add_ireland_to_address(df, address_column):
-    addresses = (df[address_column] + ',' + df['county'] + ',Ireland').tolist()
-    return addresses

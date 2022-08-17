@@ -63,8 +63,7 @@ def test_output_length_10000() -> None:
                              output_filename)
     assert os.path.exists(output_filename)
 
-from geocode.geocode_funcs import add_ireland_to_address
-from geocode.join import join_input_and_output, preprocess_raw_data_for_join
+from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
 
 
 input_data_sample = pd.read_csv("input_sample_data_one.csv")

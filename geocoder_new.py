@@ -3,6 +3,7 @@ import logging
 import time
 from geocode.geocode_funcs import (create_logger, get_api_key, get_google_results,
                                    log_progress_and_results)
+from geocode.join import preprocess_raw_data_for_join, join_input_and_output
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--backoff_time", type=int, help="backoff time", default=30)
@@ -40,9 +41,11 @@ RETURN_FULL_RESULTS = args.return_full_results
 
 # Read the data to a Pandas Dataframe
 data = pd.read_csv(input_filename, encoding='utf8')
-
 if address_column_name not in data.columns:
         raise ValueError("Missing Address column in input data")
+
+## preprocess data for join to output
+data_pp = preprocess_raw_data_for_join(data, address_column_name)
 
 # Form a list of addresses for geocoding:
 # Make a big list of all of the addresses to be processed.
@@ -93,7 +96,7 @@ for address in addresses:
             geocoded = True
 
     #Print status every 100 addresses
-    log_progress_and_results(results, logger, addresses, output_filename)
+    log_progress_and_results(results, logger, addresses, output_filename, data_pp)
     # if len(results) % 100 == 0:
     #     logger.info("Completed {} of {} address".format(len(results), len(addresses)))
 

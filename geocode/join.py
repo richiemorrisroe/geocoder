@@ -1,5 +1,6 @@
-from .geocode_funcs import add_ireland_to_address
-
+def add_ireland_to_address(df, address_column):
+    addresses = (df[address_column] + ',' + df['county'] + ',Ireland').tolist()
+    return addresses
 
 def preprocess_raw_data_for_join(df, address):
     """Takes the raw DF from the PPR and updates the address to match the
