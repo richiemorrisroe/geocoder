@@ -102,3 +102,15 @@ def log_progress_and_results(results, logger, addresses, output_filename, input_
         results_df_joined.to_csv(output_filename)
         print("saved {r} results to file".format(r=len(results)))
         pd.DataFrame(results).to_csv(output_filename, encoding='utf8')
+
+
+def normalise_address(address=None):
+    if not address:
+        raise ValueError("address must be supplied")
+    else:
+        lc_address = address.lower()
+    return lc_address
+
+def hash_address(address):
+    ah = hash(address)
+    return ah

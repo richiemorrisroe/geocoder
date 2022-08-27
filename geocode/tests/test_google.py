@@ -1,5 +1,5 @@
 import pytest
-from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, get_api_key, read_results_from_pickle
+from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, get_api_key, read_results_from_pickle, normalise_address, hash_address
 import pandas as pd
 from pathlib import Path
 import os
@@ -90,3 +90,17 @@ def test_join_input_and_output_five_rows():
     result_joined = join_input_and_output(input_data_pp, output_data_sample5)
     assert result_joined.shape[0] == input_data_sample5.shape[0]
     assert result_joined.shape[1] > input_data_sample5.shape[1]
+
+def test_addresses_can_be_normalised():
+    address = "17 Castleknock Brook, Castleknock, Dublin, Ireland"
+    normalised_address = normalise_address(address)
+    print(normalised_address)
+    assert normalised_address.islower()
+
+def test_address_can_be_hashed():
+    address1 = "17 Castleknock Brook, Castleknock, Dublin, Ireland"
+    address2 = "17 CASTLEKNOCK BROOK, CASTLEKNOCK, DUBLIN, IRELAND"
+    address_hash1 = hash_address(normalise_address(address1))
+    print(address_hash1)
+    address_hash2 = hash_address(normalise_address(address2))
+    assert address_hash1 == address_hash2
