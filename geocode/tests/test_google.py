@@ -104,3 +104,5 @@ def test_address_can_be_hashed():
     print(address_hash1)
     address_hash2 = hash_address(normalise_address(address2))
     assert address_hash1 == address_hash2
+
+
