@@ -1,6 +1,7 @@
 import pytest
+import spatialite
 from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, get_api_key, read_results_from_pickle, normalise_address, hash_address
-from geocode.sql import create_schema
+from geocode.sql import create_schema, create_table, create_connection
 import pandas as pd
 from pathlib import Path
 import os
@@ -139,3 +140,14 @@ def test_can_create_schema_for_sqlite(property_data):
         assert split_var == col_var
 
     
+
+def test_have_create_table_command(property_data):
+    schema = create_schema(property_data)
+    res = create_table(db="property.db", table_name="property_sales_stg", schema=schema)
+    assert res is not None
+
+def test_can_create_connection_object():
+    """it's generally a good idea to create a connection once and re-use it"""
+    db_name = "property.db"
+    con = create_connection(db_name)
+    assert isinstance(con, spatialite.connection.Connection)
