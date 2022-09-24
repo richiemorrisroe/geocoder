@@ -1,10 +1,17 @@
 import pytest
 from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, get_api_key, read_results_from_pickle, normalise_address, hash_address
+from geocode.sql import create_schema
 import pandas as pd
 from pathlib import Path
 import os
 from geocode.geocode_funcs import create_logger, log_progress_and_results
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
+
+
+@pytest.fixture
+def property_data():
+    result = pd.read_feather("../ppr_processed.feather")
+    return result
 
 def test_logger_is_created() -> None:
     logger = create_logger()
@@ -69,6 +76,7 @@ def test_output_length_10000() -> None:
 
 
 
+
 input_data_sample = pd.read_csv("input_sample_data_one.csv")
 output_data_sample = pd.read_csv("output_sample_data_one.csv")
 input_data_sample5 = pd.read_csv("input_sample_data.csv")
@@ -106,3 +114,28 @@ def test_address_can_be_hashed():
     assert address_hash1 == address_hash2
 
 
+def test_sqlite_can_be_loaded():
+    import spatialite
+    con = spatialite.connect("property.db")
+    assert con.cursor() is not None
+
+def test_sqlite_can_create_table():
+    import spatialite
+    con = spatialite.connect("property.db")
+    cursor = con.cursor()
+    res = cursor.execute("CREATE TABLE IF NOT EXISTS property_sales (year, price)")
+    assert res.fetchone() is None
+
+    
+def test_processed_ppr_can_be_loaded(property_data):
+    assert isinstance(property_data, pd.DataFrame)
+
+
+def test_can_create_schema_for_sqlite(property_data):
+    schema = create_schema(property_data)
+    split = schema.split(",")
+    assert len(split) == len(property_data.columns)
+    for split_var, col_var in zip(split, property_data.columns):
+        assert split_var == col_var
+
+    

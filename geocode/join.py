@@ -11,5 +11,5 @@ def preprocess_raw_data_for_join(df, address):
     return df_done
 
 def join_input_and_output(input_df, output_df):
-    input_plus_output = input_df.join(output_df, lsuffix="_input", rsuffix="_output")
+    input_plus_output = input_df.merge(output_df, left_on='input_string', right_on='input_string', suffixes=("_input", "_output"))
     return input_plus_output

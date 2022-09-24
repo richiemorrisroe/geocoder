@@ -82,13 +82,14 @@ def read_results_from_pickle(filename):
         res = pickle.load(f)
     return res
 
-from geocode.join import join_input_and_output
+from geocode.join import join_input_and_output, preprocess_raw_data_for_join
 def log_progress_and_results(results, logger, addresses, output_filename, input_data) -> None:
     # if len(results) % 6 == 0:
     #       results_df = pd.DataFrame(results)
     #       results_df_joined = join_input_and_output(input_data, results_df)
     #       results_df_joined.to_csv("{}_bak".format(output_filename))
     #       print("saved {r} results to file".format(r=len(results)))
+    input_data = preprocess_raw_data_for_join(input_data, 'address')
     if len(results) % 100 == 0:
         logger.info("Completed {} of {} address".format(len(results), len(addresses)))
     if len(results) % 500 == 0:
