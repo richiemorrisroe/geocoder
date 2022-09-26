@@ -1,10 +1,16 @@
+import os
+from pathlib import Path
+
 import pytest
 import spatialite
-from geocode.geocode_funcs import create_logger, get_api_key, get_google_results, get_api_key, read_results_from_pickle, normalise_address, hash_address
-from geocode.sql import create_schema, create_table, create_connection
+import geopandas
 import pandas as pd
-from pathlib import Path
-import os
+
+from geocode.geocode_funcs import (create_logger, get_api_key,
+                                   get_google_results, get_api_key,
+                                   read_results_from_pickle, normalise_address, hash_address)
+from geocode.sql import create_schema, create_table, create_connection, load_data_into_table, load_shapefile
+
 from geocode.geocode_funcs import create_logger, log_progress_and_results
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
 
@@ -12,7 +18,19 @@ from geocode.join import join_input_and_output, preprocess_raw_data_for_join, ad
 @pytest.fixture
 def property_data():
     result = pd.read_feather("../ppr_processed.feather")
-    return result
+    result_sample = result.sample(frac=0.05)
+    return result_sample
+
+@pytest.fixture
+def geocoded_data():
+    result = pd.read_csv("../../ppr_geocoded_till_oct2018.csv", encoding="latin1")
+    result_sample = result.sample(frac=0.05)
+    return result_sample
+
+@pytest.fixture
+def shapefile_path():
+    return "../../electoral_divisions_gps.shp"
+    
 
 def test_logger_is_created() -> None:
     logger = create_logger()
@@ -139,11 +157,17 @@ def test_can_create_schema_for_sqlite(property_data):
     for split_var, col_var in zip(split, property_data.columns):
         assert split_var == col_var
 
+def test_create_table_takes_a_connection_argument(property_data):
+    con = create_connection("property.db")
+    schema = create_schema(property_data)
+    table = create_table(con, table_name="property_sales_stg", schema=schema)
+    assert table is not None
     
 
 def test_have_create_table_command(property_data):
+    con = create_connection("property.db")
     schema = create_schema(property_data)
-    res = create_table(db="property.db", table_name="property_sales_stg", schema=schema)
+    res = create_table(con, table_name="property_sales_stg", schema=schema)
     assert res is not None
 
 def test_can_create_connection_object():
@@ -151,3 +175,22 @@ def test_can_create_connection_object():
     db_name = "property.db"
     con = create_connection(db_name)
     assert isinstance(con, spatialite.connection.Connection)
+
+def test_can_load_data_into_table(property_data):
+    con = create_connection("property.db")
+    schema = create_schema(property_data)
+    table_name = create_table(con, table_name="property_sales_stg", schema=schema)
+    load_result = load_data_into_table(con, table_name, data=property_data, if_exists="replace")
+    assert load_result is not None
+
+
+def test_can_load_geocoded_data(geocoded_data):
+    con = create_connection("property.db")
+    load_result = load_data_into_table(con, table_name="property_sales_geocoded", data=geocoded_data, if_exists="replace")
+    assert load_result is not None
+
+
+def test_can_load_shapefile(shapefile_path):
+    con = create_connection("property.db")
+    load_result = load_shapefile(con,  shapefile_path=shapefile_path,
+                                 table_name="electoral_districts_2011")
