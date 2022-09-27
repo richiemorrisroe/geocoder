@@ -24,6 +24,7 @@ logger = create_logger()
 # Example: API_KEY = 'AIzaSyC9azed9tLdjpZNjg2_kVePWvMIBq154eA'
 # key_file = open("key.txt", "r")
 # key = key_file.readline().strip()
+
 key = get_api_key("key.txt")
 API_KEY = key
 
@@ -49,12 +50,12 @@ data_pp = preprocess_raw_data_for_join(data, address_column_name)
 
 # Form a list of addresses for geocoding:
 # Make a big list of all of the addresses to be processed.
-addresses = data[address_column_name].tolist()
+addresses = data_pp[address_column_name].tolist()
 
 # **** DEMO DATA / IRELAND SPECIFIC! ****
 # We know that these addresses are in Ireland, and there's a column for county, so add this for accuracy. 
 # (remove this line / alter for your own dataset)
-addresses = (data[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
+addresses = (data_pp[address_column_name] + ',' + data['county'] + ',Ireland').tolist()
 
 
 #------------------ PROCESSING LOOP -----------------------------

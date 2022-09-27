@@ -24,10 +24,26 @@ def load_data_into_table(con, table_name, data:pd.DataFrame, if_exists=None):
     data.to_sql(name=table_name, con=con, if_exists="replace")
     return 1
 
-def load_shapefile(con, shapefile_path, table_name):
+def load_shapefile(shapefile_path, table_name):
     if not table_name:
         raise ValueError("table name must be supplied")
     projection = "CP1252"
-    cursor = con.cursor()
-    cursor.execute(f""".loadshp electoral_divisions_gps {table_name} {projection}""")
+    import subprocess
+    subprocess.call(["spatialite", "property.db", 
+                     f".loadshp electoral_divisions_gps {table_name} {projection}"])
     return 1
+
+def join_tables(con, table_left, table_right, join_type, join_keys):
+    pass
+
+def get_data_from_db(connection, query):
+    result = pd.read_sql(query, con=connection)
+    return result
+
+def get_property_data(connection, table_name, num_results):
+    query = f"select * from {table_name} limit {num_results}"
+    result = get_data_from_db(connection, query)
+    return result
+
+
+    
