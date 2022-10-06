@@ -47,3 +47,5 @@ def get_property_data(connection, table_name, num_results):
 
 
     
+def generate_ungeocoded_addresses(connection):
+    return None

@@ -112,6 +112,6 @@ def normalise_address(address=None):
         lc_address = address.lower()
     return lc_address
 
-def hash_address(address):
-    ah = hash(address)
+def create_unique_identifier(address, date):
+    ah = hash(address) + hash(date)
     return ah

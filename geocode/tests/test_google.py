@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from geocode.geocode_funcs import create_unique_identifier
 
 import pytest
 import spatialite
@@ -8,8 +9,8 @@ import pandas as pd
 
 from geocode.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
-                                   read_results_from_pickle, normalise_address, hash_address)
-from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data
+                                   read_results_from_pickle, normalise_address, create_unique_identifier)
+from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data, generate_ungeocoded_addresses
 
 from geocode.geocode_funcs import create_logger, log_progress_and_results
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
@@ -131,9 +132,9 @@ def test_addresses_can_be_normalised():
 def test_address_can_be_hashed():
     address1 = "17 Castleknock Brook, Castleknock, Dublin, Ireland"
     address2 = "17 CASTLEKNOCK BROOK, CASTLEKNOCK, DUBLIN, IRELAND"
-    address_hash1 = hash_address(normalise_address(address1))
+    address_hash1 = create_unique_identifier(normalise_address(address1), "22/07/2022")
     print(address_hash1)
-    address_hash2 = hash_address(normalise_address(address2))
+    address_hash2 = create_unique_identifier(normalise_address(address2), "22/07/2022")
     assert address_hash1 == address_hash2
 
 
@@ -214,4 +215,8 @@ def test_can_load_data_from_ungeocoded_table(connection):
                                table_name = table_name,
                                num_results = num_results)
     assert result.shape[0] == num_results
+
+def test_can_generate_ungeocoded_addresses(connection):
+    result = generate_ungeocoded_addresses(connection)
+    assert result is not None
     
