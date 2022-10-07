@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from geocode.geocode_funcs import create_unique_identifier
+from geocode.geocode_funcs import remove_duplicates
 
 import pytest
 import spatialite
@@ -9,7 +10,7 @@ import pandas as pd
 
 from geocode.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
-                                   read_results_from_pickle, normalise_address, create_unique_identifier)
+                                   read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
 from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data, generate_ungeocoded_addresses
 
 from geocode.geocode_funcs import create_logger, log_progress_and_results
@@ -21,6 +22,11 @@ def property_data():
     result = pd.read_feather("../ppr_processed.feather")
     result_sample = result.sample(frac=0.01)
     return result_sample
+
+@pytest.fixture
+def pd_full():
+    result = pd.read_feather("../ppr_processed.feather")
+    return result
 
 @pytest.fixture
 def geocoded_data():
@@ -132,9 +138,10 @@ def test_addresses_can_be_normalised():
 def test_address_can_be_hashed():
     address1 = "17 Castleknock Brook, Castleknock, Dublin, Ireland"
     address2 = "17 CASTLEKNOCK BROOK, CASTLEKNOCK, DUBLIN, IRELAND"
-    address_hash1 = create_unique_identifier(normalise_address(address1), "22/07/2022")
+    idx = 101
+    address_hash1 = create_unique_identifier(normalise_address(address1), "22/07/2022", 428000, idx)
     print(address_hash1)
-    address_hash2 = create_unique_identifier(normalise_address(address2), "22/07/2022")
+    address_hash2 = create_unique_identifier(normalise_address(address2), "22/07/2022", 428000, idx)
     assert address_hash1 == address_hash2
 
 
@@ -216,7 +223,22 @@ def test_can_load_data_from_ungeocoded_table(connection):
                                num_results = num_results)
     assert result.shape[0] == num_results
 
-def test_can_generate_ungeocoded_addresses(connection):
-    result = generate_ungeocoded_addresses(connection)
-    assert result is not None
+# def test_can_generate_ungeocoded_addresses(connection):
+#     result = generate_ungeocoded_addresses(connection)
+#     assert result is not None
+
+def test_can_standardise_property_data(pd_full):
+    property_data = pd_full
+    no_dups = remove_duplicates(property_data)
+    standardised = standardise_data(property_data)
+    assert standardised.shape[1]  > property_data.shape[1]
+    assert standardised.unique_id is not None
+    vc = standardised.groupby(standardised.columns.to_list(), as_index=False).size()
+    vc = standardised.unique_id.value_counts()
+    vc2 = vc.iloc[:13].value_counts()
+    print(f"{vc2=}")
+    unique_vals = set(list(vc2.values))
+    # if rows= then no rpeps of uniq id
+    assert unique_vals == set([1])
+
     
