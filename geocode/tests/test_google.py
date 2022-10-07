@@ -138,10 +138,9 @@ def test_addresses_can_be_normalised():
 def test_address_can_be_hashed():
     address1 = "17 Castleknock Brook, Castleknock, Dublin, Ireland"
     address2 = "17 CASTLEKNOCK BROOK, CASTLEKNOCK, DUBLIN, IRELAND"
-    idx = 101
-    address_hash1 = create_unique_identifier(normalise_address(address1), "22/07/2022", 428000, idx)
+    address_hash1 = create_unique_identifier(normalise_address(address1), "22/07/2022", 428000)
     print(address_hash1)
-    address_hash2 = create_unique_identifier(normalise_address(address2), "22/07/2022", 428000, idx)
+    address_hash2 = create_unique_identifier(normalise_address(address2), "22/07/2022", 428000)
     assert address_hash1 == address_hash2
 
 
@@ -233,12 +232,13 @@ def test_can_standardise_property_data(pd_full):
     standardised = standardise_data(property_data)
     assert standardised.shape[1]  > property_data.shape[1]
     assert standardised.unique_id is not None
-    vc = standardised.groupby(standardised.columns.to_list(), as_index=False).size()
-    vc = standardised.unique_id.value_counts()
-    vc2 = vc.iloc[:13].value_counts()
+    new = standardised.groupby(standardised.columns.to_list(), as_index=False).size()
+    
+    vc2 = new[['size']].value_counts()
     print(f"{vc2=}")
-    unique_vals = set(list(vc2.values))
+    assert len(vc2.index) == 1
+    unique_vals = vc2.index.to_list().pop()[0]
     # if rows= then no rpeps of uniq id
-    assert unique_vals == set([1])
+    assert unique_vals == 1
 
     
