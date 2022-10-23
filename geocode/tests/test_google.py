@@ -242,3 +242,9 @@ def test_can_standardise_property_data(pd_full):
     assert unique_vals == 1
 
     
+
+def test_can_check_for_already_existing_rows(connection, pd_full):
+    pd_sample = pd_full.sample(size=0.01)
+    
+    
+    

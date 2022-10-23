@@ -124,4 +124,5 @@ def standardise_data(df):
     df1 = remove_duplicates(df)
     df2 = df1.assign(address = df.address.apply(lambda x : normalise_address(x)))
     df3 = df2.assign(unique_id = df.apply(lambda x :create_unique_identifier(x.address, x.date_of_sale, x.price), axis=1))
+    df3['unique_id'] = df3.unique_id.astype(str)
     return df3
