@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from pathlib import Path
 from geocode.geocode_funcs import create_unique_identifier
@@ -11,7 +12,7 @@ import pandas as pd
 from geocode.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
                                    read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
-from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data, generate_ungeocoded_addresses
+from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows
 
 from geocode.geocode_funcs import create_logger, log_progress_and_results
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
@@ -33,6 +34,11 @@ def geocoded_data():
     result = pd.read_csv("../../ppr_geocoded_till_oct2018.csv", encoding="latin1")
     result_sample = result.sample(frac=0.01)
     return result_sample
+
+@pytest.fixture
+def gc_full():
+    result = pd.read_csv("../../ppr_geocoded_till_oct2018.csv", encoding="latin1")
+    return result
 
 @pytest.fixture
 def shapefile_path():
@@ -229,7 +235,7 @@ def test_can_load_data_from_ungeocoded_table(connection):
 def test_can_standardise_property_data(pd_full):
     property_data = pd_full
     no_dups = remove_duplicates(property_data)
-    standardised = standardise_data(property_data)
+    standardised = standardise_data(property_data, address_column='address')
     assert standardised.shape[1]  > property_data.shape[1]
     assert standardised.unique_id is not None
     new = standardised.groupby(standardised.columns.to_list(), as_index=False).size()
@@ -241,10 +247,24 @@ def test_can_standardise_property_data(pd_full):
     # if rows= then no rpeps of uniq id
     assert unique_vals == 1
 
-    
 
-def test_can_check_for_already_existing_rows(connection, pd_full):
-    pd_sample = pd_full.sample(size=0.01)
-    
+def test_standardise_property_data_converts_strings_to_dates(geocoded_data):
+    gc_no_duplicates = remove_duplicates(geocoded_data)
+    standardised = standardise_data(gc_no_duplicates, address_column='address')
+    assert isinstance(standardised['date_of_sale'].tolist().pop(0), datetime)
+
+
+def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
+    print(f"{gc_full.shape}")
+    pd2 = standardise_data(remove_duplicates(pd_full), address_column='address')
+    gc2 = standardise_data(remove_duplicates(gc_full), address_column='address')
+    merged = pd2.merge(gc2, how='inner', on=['unique_id'])
+    assert merged.shape[0] <= gc2.shape[0]
+
+# def test_can_check_for_already_existing_rows(connection, pd_full):
+#     pd_sample = pd_full.sample(frac=0.01)
+#     table_name = 'property_sales_stg'
+#     new_rows = check_for_new_rows(connection, pd_sample, table_name)
+#     assert new_rows == 0
     
     

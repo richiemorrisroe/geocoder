@@ -49,3 +49,7 @@ def get_property_data(connection, table_name, num_results):
     
 def generate_ungeocoded_addresses(connection):
     return None
+
+
+def check_for_new_rows(connection, dataframe, table_name):
+    return 0

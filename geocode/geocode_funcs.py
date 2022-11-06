@@ -113,16 +113,18 @@ def normalise_address(address=None):
     return lc_address
 
 def create_unique_identifier(address, date, price):
-    ah = hash(address) + hash(date) + hash(price)
+    ah = address + str(date) + str(price)
     return ah
 
 def remove_duplicates(df):
     result = df.drop_duplicates()
     return result
 
-def standardise_data(df):
+def standardise_data(df, address_column):
     df1 = remove_duplicates(df)
-    df2 = df1.assign(address = df.address.apply(lambda x : normalise_address(x)))
-    df3 = df2.assign(unique_id = df.apply(lambda x :create_unique_identifier(x.address, x.date_of_sale, x.price), axis=1))
+    df2 = df1.assign(
+                     date_of_sale=pd.to_datetime(df.date_of_sale, format='%Y-%m-%d'))
+    df3 = df2.assign(unique_id = df.apply(lambda x :create_unique_identifier(normalise_address(x.address), x.date_of_sale, x.price), axis=1))
     df3['unique_id'] = df3.unique_id.astype(str)
+
     return df3
