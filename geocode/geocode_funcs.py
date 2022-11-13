@@ -1,4 +1,5 @@
 import logging
+import re
 import requests
 import pandas as pd
 def create_logger():
@@ -110,6 +111,7 @@ def normalise_address(address=None):
         raise ValueError("address must be supplied")
     else:
         lc_address = address.lower()
+        
     return lc_address
 
 def create_unique_identifier(address, date, price):
@@ -125,6 +127,6 @@ def standardise_data(df, address_column):
     df2 = df1.assign(
                      date_of_sale=pd.to_datetime(df.date_of_sale, format='%Y-%m-%d'))
     df3 = df2.assign(unique_id = df.apply(lambda x :create_unique_identifier(normalise_address(x.address), x.date_of_sale, x.price), axis=1))
-    df3['unique_id'] = df3.unique_id.astype(str)
+    df3['unique_id'] = df3.unique_id.apply(lambda x: re.sub('[^A-Za-z0-9]+', '', x)).astype(str)
 
     return df3

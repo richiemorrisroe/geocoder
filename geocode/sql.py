@@ -51,5 +51,18 @@ def generate_ungeocoded_addresses(connection):
     return None
 
 
-def check_for_new_rows(connection, dataframe, table_name):
-    return 0
+def check_for_new_rows(connection, dataframe, table_name, limit=None):
+    if limit:
+        limit_str = f"LIMIT {limit}"
+    else:
+        limit_str = ""
+    sql = """SELECT stg.*
+    FROM property_sales_stg stg
+    LEFT JOIN property_sales_geocoded gc
+    ON
+    stg.unique_id=gc.unique_id
+    WHERE
+    latitude is null {limit}""".format(limit=limit_str)
+    data = get_data_from_db(connection, query=sql)
+    return data
+    

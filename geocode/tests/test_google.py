@@ -1,6 +1,9 @@
 from datetime import datetime
 import os
+
 from pathlib import Path
+import re
+
 from geocode.geocode_funcs import create_unique_identifier
 from geocode.geocode_funcs import remove_duplicates
 
@@ -261,10 +264,25 @@ def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
     merged = pd2.merge(gc2, how='inner', on=['unique_id'])
     assert merged.shape[0] <= gc2.shape[0]
 
-# def test_can_check_for_already_existing_rows(connection, pd_full):
-#     pd_sample = pd_full.sample(frac=0.01)
-#     table_name = 'property_sales_stg'
-#     new_rows = check_for_new_rows(connection, pd_sample, table_name)
-#     assert new_rows == 0
+def test_can_check_for_already_existing_rows(connection, pd_full):
+    pd_sample = pd_full.sample(frac=0.01)
+    table_name = 'property_sales_stg'
+    new_rows = check_for_new_rows(connection, pd_sample, table_name)
+    print(new_rows.head())
+    assert new_rows.shape[0] > 0 & new_rows.shape[0] <= pd_sample.shape[0]
+
+def test_unique_id_contains_only_alpha_numerics(property_data):
+    data_standardised = standardise_data(property_data, address_column='address')
+    uniq_ids = data_standardised.unique_id.tolist()
+    for ids in uniq_ids:
+        assert ids.isalnum()
+
+
+def test_check_for_new_rows_returns_limit_rows(connection, pd_full):
+    pd_sample = pd_full.sample(frac=0.01)
+    table_name = 'property_sales_stg'
+    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=1)
+    assert new_rows.shape[0] == 1
+
     
     
