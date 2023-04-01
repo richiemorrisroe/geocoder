@@ -1,3 +1,4 @@
+import logging
 import spatialite
 import pandas as pd
 
@@ -51,18 +52,26 @@ def generate_ungeocoded_addresses(connection):
     return None
 
 
-def check_for_new_rows(connection, dataframe, table_name, limit=None):
+def check_for_new_rows(connection, dataframe, table_name, limit=None, county_name=None):
     if limit:
         limit_str = f"LIMIT {limit}"
     else:
         limit_str = ""
+    if county_name:
+        county_str = f"AND county='{county_name}'"
+    else:
+        county_str = ""
     sql = """SELECT stg.*
     FROM property_sales_stg stg
     LEFT JOIN property_sales_geocoded gc
     ON
     stg.unique_id=gc.unique_id
     WHERE
-    latitude is null {limit}""".format(limit=limit_str)
+    latitude is null
+    {county_str}
+    {limit}""".format(limit=limit_str,
+                      county_str=county_str)
+    logging.log(level=1, msg=f"{sql=}")
     data = get_data_from_db(connection, query=sql)
     return data
     

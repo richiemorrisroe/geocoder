@@ -1,5 +1,7 @@
 from datetime import datetime
 import os
+import random
+
 
 from pathlib import Path
 import re
@@ -15,7 +17,8 @@ import pandas as pd
 from geocode.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
                                    read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
-from geocode.sql import create_schema, create_table, create_connection, get_data_from_db, load_data_into_table, load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows
+from geocode.sql import (create_schema, create_table, create_connection, get_data_from_db, load_data_into_table,
+                         load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows)
 
 from geocode.geocode_funcs import create_logger, log_progress_and_results
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
@@ -234,7 +237,7 @@ def test_can_load_data_from_ungeocoded_table(connection):
 # def test_can_generate_ungeocoded_addresses(connection):
 #     result = generate_ungeocoded_addresses(connection)
 #     assert result is not None
-
+@pytest.mark.slow()
 def test_can_standardise_property_data(pd_full):
     property_data = pd_full
     no_dups = remove_duplicates(property_data)
@@ -256,7 +259,7 @@ def test_standardise_property_data_converts_strings_to_dates(geocoded_data):
     standardised = standardise_data(gc_no_duplicates, address_column='address')
     assert isinstance(standardised['date_of_sale'].tolist().pop(0), datetime)
 
-
+@pytest.mark.slow
 def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
     print(f"{gc_full.shape}")
     pd2 = standardise_data(remove_duplicates(pd_full), address_column='address')
@@ -277,12 +280,25 @@ def test_unique_id_contains_only_alpha_numerics(property_data):
     for ids in uniq_ids:
         assert ids.isalnum()
 
-
+@pytest.mark.slow
 def test_check_for_new_rows_returns_limit_rows(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
+    limit = random.sample(range(0, 99), k=1).pop()
     table_name = 'property_sales_stg'
-    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=1)
-    assert new_rows.shape[0] == 1
+    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=limit)
+    assert new_rows.shape[0] == limit
 
+
+def test_check_for_new_rows_takes_a_county_argument(connection, pd_full):
+    county_name = "Dublin"
+    pd_sample = pd_full.sample(frac=0.01)
+    limit = random.sample(range(0, 99), k=1).pop()
+    table_name = 'property_sales_stg'
+    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=limit, county_name=county_name)
+    gb = new_rows.groupby('county').count()
+    print(gb)
+    assert gb.shape[0]==1 #i.e. there's only one county to group by
+
+    
     
     
