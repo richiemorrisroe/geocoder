@@ -1,12 +1,16 @@
 import logging
 import re
+import sys
+
 import requests
 import pandas as pd
+
+
 def create_logger():
     logger = logging.getLogger("root")
     logger.setLevel(logging.DEBUG)
     # create console handler
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(stream=sys.stdout)
     ch.setLevel(logging.DEBUG)
     logger.addHandler(ch)
     return logger

@@ -52,7 +52,7 @@ def generate_ungeocoded_addresses(connection):
     return None
 
 
-def check_for_new_rows(connection, dataframe, table_name, limit=None, county_name=None):
+def check_for_new_rows(connection, table_name, limit=None, county_name=None):
     if limit:
         limit_str = f"LIMIT {limit}"
     else:

@@ -126,7 +126,7 @@ output_data_sample5 = pd.read_csv("output_sample_data.csv")
 
 def test_add_ireland_to_address():
     result = add_ireland_to_address(input_data_sample, "address")
-    assert result[0].endswith("Ireland")
+    assert result.address[0].endswith("Ireland")
 
 
 def test_join_input_and_output_one_row():
