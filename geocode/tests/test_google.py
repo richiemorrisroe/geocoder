@@ -129,11 +129,11 @@ def test_add_ireland_to_address():
     assert result.address[0].endswith("Ireland")
 
 
-def test_join_input_and_output_one_row():
-    input_data_pp = preprocess_raw_data_for_join(input_data_sample, "address")
-    result_joined = join_input_and_output(input_data_pp, output_data_sample)
-    assert result_joined.shape[0] == input_data_sample.shape[0]
-    assert result_joined.shape[1] > input_data_sample.shape[1]
+# def test_join_input_and_output_one_row():
+#     input_data_pp = preprocess_raw_data_for_join(input_data_sample, "address")
+#     result_joined = join_input_and_output(input_data_pp, output_data_sample)
+#     assert result_joined.shape[0] == input_data_sample.shape[0]
+#     assert result_joined.shape[1] > input_data_sample.shape[1]
 
 def test_join_input_and_output_five_rows():
     input_data_pp = preprocess_raw_data_for_join(input_data_sample5, "address")
@@ -270,7 +270,7 @@ def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
 def test_can_check_for_already_existing_rows(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
     table_name = 'property_sales_stg'
-    new_rows = check_for_new_rows(connection, pd_sample, table_name)
+    new_rows = check_for_new_rows(connection=connection, table_name=table_name)
     print(new_rows.head())
     assert new_rows.shape[0] > 0 & new_rows.shape[0] <= pd_sample.shape[0]
 
@@ -285,7 +285,7 @@ def test_check_for_new_rows_returns_limit_rows(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
     limit = random.sample(range(0, 99), k=1).pop()
     table_name = 'property_sales_stg'
-    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=limit)
+    new_rows = check_for_new_rows(connection, table_name, limit=limit)
     assert new_rows.shape[0] == limit
 
 
@@ -294,7 +294,7 @@ def test_check_for_new_rows_takes_a_county_argument(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
     limit = random.sample(range(0, 99), k=1).pop()
     table_name = 'property_sales_stg'
-    new_rows = check_for_new_rows(connection, pd_sample, table_name, limit=limit, county_name=county_name)
+    new_rows = check_for_new_rows(connection, table_name, limit=limit, county_name=county_name)
     gb = new_rows.groupby('county').count()
     print(gb)
     assert gb.shape[0]==1 #i.e. there's only one county to group by

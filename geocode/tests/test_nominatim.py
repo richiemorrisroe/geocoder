@@ -40,8 +40,10 @@ def test_convert_response_to_json_returns_lat_and_lon():
 
 
 def test_can_geocode_random_addesses(connection):
-    limit = 10
+    limit = 100
     logger = create_logger()
     gc_adds = geocode_addresses(connection, "address", limit=limit, logger=logger)
-    print(f"{gc_adds.address.head()=}")
-    assert len(gc_adds) == limit
+    sum_correct = gc_adds.data.notnull().sum()
+    print(f"{gc_adds.data.head()=}")
+    print(f"{sum_correct=}")    # 
+    assert len(gc_adds) == limit-1

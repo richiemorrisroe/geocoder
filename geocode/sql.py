@@ -22,6 +22,7 @@ def create_connection(db_name:str):
 def load_data_into_table(con, table_name, data:pd.DataFrame, if_exists=None):
     if not if_exists:
         raise ValueError("please define behaviour when table already exists")
+    print(f"{data.head()=}")
     data.to_sql(name=table_name, con=con, if_exists=if_exists)
     return 1
 

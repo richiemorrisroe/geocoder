@@ -2,6 +2,7 @@ import json
 
 import requests
 import pandas as pd
+from geocode.geocode_funcs import normalise_address
 
 
 from geocode.join import add_ireland_to_address
@@ -32,9 +33,9 @@ def geocode_addresses(connection, address_column:str, limit=10, logger=None):
         result = get_geocode_from_address(address=add)
         if len(eval(result.content))==0:
             #we didn't get a match
+            log_str = f"did not match {add}"
             if logger:
-                log_str = f"did not match {add}"
-                logger.log(msg=log_str, level=0)
+                logger.log(msg=log_str, level=10)
             else:
                 print(log_str)
             res_dict = {}
