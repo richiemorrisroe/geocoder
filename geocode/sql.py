@@ -1,5 +1,5 @@
 import logging
-import spatialite
+import sqlite3 as spatialite
 import pandas as pd
 
 

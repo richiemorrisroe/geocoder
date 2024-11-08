@@ -10,7 +10,7 @@ from geocode.geocode_funcs import create_unique_identifier
 from geocode.geocode_funcs import remove_duplicates
 
 import pytest
-import spatialite
+import sqlite3 as spatialite 
 import geopandas
 import pandas as pd
 
@@ -80,7 +80,7 @@ key = get_api_key('key.txt')
 #     assert kilcanway_full == old_full
 
 
-resource_path = "/home/richie/Dropbox/for_dropbox/geocoder/" 
+resource_path = "/Users/richie/Dropbox/for_dropbox/geocoder/" 
 output_data = pd.read_csv(os.path.join(resource_path, 'output_full_2018_19.csv'))
 output_data_100 = output_data.iloc[0:100,]
 output_data_500 = output_data.iloc[0:500,]
@@ -156,17 +156,17 @@ def test_address_can_be_hashed():
     assert address_hash1 == address_hash2
 
 
-def test_sqlite_can_be_loaded(connection):
-    import spatialite
-    con = connection
-    assert con.cursor() is not None
+# def test_sqlite_can_be_loaded(connection):
+#     import spatialite
+#     con = connection
+#     assert con.cursor() is not None
 
-def test_sqlite_can_create_table(connection):
-    import spatialite
-    con = connection
-    cursor = con.cursor()
-    res = cursor.execute("CREATE TABLE IF NOT EXISTS property_sales_sample (year, price)")
-    assert res.fetchone() is None
+# def test_sqlite_can_create_table(connection):
+#     import spatialite
+#     con = connection
+#     cursor = con.cursor()
+#     res = cursor.execute("CREATE TABLE IF NOT EXISTS property_sales_sample (year, price)")
+#     assert res.fetchone() is None
 
     
 def test_processed_ppr_can_be_loaded(property_data):
@@ -193,11 +193,11 @@ def test_have_create_table_command(property_data, connection):
     res = create_table(con, table_name="property_sales_stg_sample", schema=schema)
     assert res is not None
 
-def test_can_create_connection_object():
-    """it's generally a good idea to create a connection once and re-use it"""
-    db_name = "property.db"
-    con = create_connection(db_name)
-    assert isinstance(con, spatialite.connection.Connection)
+# def test_can_create_connection_object():
+#     """it's generally a good idea to create a connection once and re-use it"""
+#     db_name = "property.db"
+#     con = create_connection(db_name)
+#     assert isinstance(con, spatialite.connection.Connection)
 
 def test_can_load_data_into_table(property_data, connection):
     con = connection

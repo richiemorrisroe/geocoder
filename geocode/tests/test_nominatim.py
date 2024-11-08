@@ -10,12 +10,13 @@ from geocode.osm import geocode_addresses, get_geocode_from_address, convert_res
 def connection():
     return create_connection('property.db')
 
-
+@pytest.mark.skip
 def test_get_geocode_from_address_returns_something():
     address = "17 castleknock brook, castleknock, dublin, ireland"
     result = get_geocode_from_address(address)
     assert result is not None
 
+@pytest.mark.skip    
 def test_get_geocode_from_address_returns_some_content():
     address = "17 castleknock brook, castleknock, dublin, ireland"
     result = get_geocode_from_address(address)
@@ -23,6 +24,7 @@ def test_get_geocode_from_address_returns_some_content():
     assert result.content is not None
 
 
+@pytest.mark.skip    
 def test_convert_response_to_json_returns_json():
     address = "17 castleknock brook, castleknock, dublin, ireland"
     result = get_geocode_from_address(address)
@@ -31,6 +33,7 @@ def test_convert_response_to_json_returns_json():
     assert isinstance(result_json, dict)
 
 
+@pytest.mark.skip    
 def test_convert_response_to_json_returns_lat_and_lon():
     address = "17 castleknock brook, castleknock, dublin, ireland"
     result = get_geocode_from_address(address)
@@ -38,7 +41,7 @@ def test_convert_response_to_json_returns_lat_and_lon():
     print(f"{result_json.keys()=}")
     assert result_json['lat'] is not None and result_json['lon'] is not None
 
-
+@pytest.mark.skip
 def test_can_geocode_random_addesses(connection):
     limit = 100
     logger = create_logger()

@@ -2,8 +2,8 @@ import logging
 import re
 import sys
 
-import requests
 import pandas as pd
+import requests
 
 
 def create_logger():
@@ -78,6 +78,8 @@ def get_google_results(address, api_key=None, return_full_response=False):
     return output
 
 import pickle
+
+
 def write_results_to_pickle(results, filename):
     with open(filename, 'wb') as f:
         pickle.dump(results, f)
@@ -88,6 +90,8 @@ def read_results_from_pickle(filename):
     return res
 
 from geocode.join import join_input_and_output, preprocess_raw_data_for_join
+
+
 def log_progress_and_results(results, logger, addresses, output_filename, input_data) -> None:
     # if len(results) % 6 == 0:
     #       results_df = pd.DataFrame(results)

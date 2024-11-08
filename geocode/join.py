@@ -6,7 +6,7 @@ def preprocess_raw_data_for_join(df, address):
     """Takes the raw DF from the PPR and updates the address to match the
       format from the output data (i.e. input string)"""
     df2 = add_ireland_to_address(df, address)
-    input_string = df2.address
+    input_string = df2[address]
     df_done = df.copy()
     df_done.loc[:,"input_string"] = input_string
     return df_done
