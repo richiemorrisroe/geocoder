@@ -209,7 +209,9 @@ def test_can_load_data_into_table(property_data, connection):
 
 def test_can_load_geocoded_data(geocoded_data, connection):
     con = connection
-    load_result = load_data_into_table(con, table_name="property_sales_geocoded_sample", data=geocoded_data, if_exists="replace")
+    load_result = load_data_into_table(con,
+                                       table_name="property_sales_geocoded_sample",
+                                       data=geocoded_data, if_exists="replace")
     assert load_result is not None
 
 
@@ -240,18 +242,17 @@ def test_can_load_data_from_ungeocoded_table(connection):
 @pytest.mark.slow()
 def test_can_standardise_property_data(pd_full):
     property_data = pd_full
-    no_dups = remove_duplicates(property_data)
     standardised = standardise_data(property_data, address_column='address')
-    assert standardised.shape[1]  > property_data.shape[1]
-    assert standardised.unique_id is not None
+
     new = standardised.groupby(standardised.columns.to_list(), as_index=False).size()
-    
     vc2 = new[['size']].value_counts()
     print(f"{vc2=}")
     assert len(vc2.index) == 1
     unique_vals = vc2.index.to_list().pop()[0]
     # if rows= then no rpeps of uniq id
     assert unique_vals == 1
+    assert standardised.shape[1]  > property_data.shape[1]
+    assert standardised.unique_id is not None
 
 
 def test_standardise_property_data_converts_strings_to_dates(geocoded_data):
@@ -291,14 +292,10 @@ def test_check_for_new_rows_returns_limit_rows(connection, pd_full):
 
 def test_check_for_new_rows_takes_a_county_argument(connection, pd_full):
     county_name = "Dublin"
-    pd_sample = pd_full.sample(frac=0.01)
     limit = random.sample(range(0, 99), k=1).pop()
     table_name = 'property_sales_stg'
-    new_rows = check_for_new_rows(connection, table_name, limit=limit, county_name=county_name)
+    new_rows = check_for_new_rows(connection, table_name, limit=limit,
+                                  county_name=county_name)
     gb = new_rows.groupby('county').count()
     print(gb)
     assert gb.shape[0]==1 #i.e. there's only one county to group by
-
-    
-    
-    
