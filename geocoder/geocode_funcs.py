@@ -6,6 +6,8 @@ import pandas as pd
 import requests
 
 
+from geocoder.join import join_input_and_output, preprocess_raw_data_for_join
+
 def create_logger():
     logger = logging.getLogger("root")
     logger.setLevel(logging.DEBUG)
@@ -89,7 +91,7 @@ def read_results_from_pickle(filename):
         res = pickle.load(f)
     return res
 
-from geocode.join import join_input_and_output, preprocess_raw_data_for_join
+
 
 
 def log_progress_and_results(results, logger, addresses, output_filename, input_data) -> None:
