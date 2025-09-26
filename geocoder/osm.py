@@ -2,12 +2,12 @@ import json
 
 import requests
 import pandas as pd
-from geocode.geocode_funcs import normalise_address
+from geocoder.geocode_funcs import normalise_address
 
 
-from geocode.join import add_ireland_to_address
+from geocoder.join import add_ireland_to_address
 
-from geocode.sql import check_for_new_rows
+from geocoder.sql import check_for_new_rows
 BASE_URL = "http://localhost:8080/search?"
 
 def get_geocode_from_address(address, base_url=BASE_URL):

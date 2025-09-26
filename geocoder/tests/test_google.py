@@ -6,22 +6,22 @@ import random
 from pathlib import Path
 import re
 
-from geocode.geocode_funcs import create_unique_identifier
-from geocode.geocode_funcs import remove_duplicates
+from geocoder.geocode_funcs import create_unique_identifier
+from geocoder.geocode_funcs import remove_duplicates
 
 import pytest
 import sqlite3 as spatialite 
 import geopandas
 import pandas as pd
 
-from geocode.geocode_funcs import (create_logger, get_api_key,
+from geocoder.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
                                    read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
-from geocode.sql import (create_schema, create_table, create_connection, get_data_from_db, load_data_into_table,
+from geocoder.sql import (create_schema, create_table, create_connection, get_data_from_db, load_data_into_table,
                          load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows)
 
-from geocode.geocode_funcs import create_logger, log_progress_and_results
-from geocode.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
+from geocoder.geocode_funcs import create_logger, log_progress_and_results
+from geocoder.join import join_input_and_output, preprocess_raw_data_for_join, add_ireland_to_address
 
 
 @pytest.fixture

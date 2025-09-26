@@ -64,7 +64,7 @@ def generate_ungeocoded_addresses(connection):
     return None
 
 
-def check_for_new_rows(connection, table_name, limit=None, county_name=None):
+def check_for_new_rows(connection, table_name, limit=None, county_name=None, from_date=None):
     if limit:
         limit_str = f"LIMIT {limit}"
     else:
@@ -73,6 +73,11 @@ def check_for_new_rows(connection, table_name, limit=None, county_name=None):
         county_str = f"AND county='{county_name}'"
     else:
         county_str = ""
+    if from_date:
+        date_str = f"AND stg.date_of_sale > '{from_date}'"
+    else:
+        date_str = ""
+
     sql = """SELECT stg.*
     FROM property_sales_stg stg
     LEFT JOIN property_sales_geocoded gc
@@ -81,9 +86,19 @@ def check_for_new_rows(connection, table_name, limit=None, county_name=None):
     WHERE
     latitude is null
     {county_str}
+    {date_str}
     {limit}""".format(
-        limit=limit_str, county_str=county_str
+        limit=limit_str, county_str=county_str, date_str=date_str
     )
     logging.log(level=1, msg=f"{sql=}")
     data = get_data_from_db(connection, query=sql)
     return data
+
+
+def format_results(results):
+    # assert len(result) == 1, 'Cannot handle multiple objects'-
+    res = []
+    for input_string, results in results.items():
+        res.append(results)
+    res_df = pd.DataFrame.from_records(res)
+    return res_df

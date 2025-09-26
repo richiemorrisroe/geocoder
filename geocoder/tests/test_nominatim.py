@@ -1,10 +1,10 @@
 import json
-from geocode.geocode_funcs import create_logger
-from geocode.join import add_ireland_to_address
-from geocode.sql import check_for_new_rows, create_connection
+from geocoder.geocode_funcs import create_logger
+from geocoder.join import add_ireland_to_address
+from geocoder.sql import check_for_new_rows, create_connection
 import pytest
 
-from geocode.osm import geocode_addresses, get_geocode_from_address, convert_response_to_json
+from geocoder.osm import geocode_addresses, get_geocode_from_address, convert_response_to_json
 
 @pytest.fixture
 def connection():
