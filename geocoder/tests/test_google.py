@@ -17,7 +17,7 @@ import pandas as pd
 from geocoder.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
                                    read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
-from geocoder.sql import (create_schema, create_table, create_connection, get_data_from_db, load_data_into_table,
+from geocoder.sql import (create_schema, create_table, create_connection, drop_table, get_data_from_db, load_data_into_table,
                          load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows)
 
 from geocoder.geocode_funcs import create_logger, log_progress_and_results
@@ -299,3 +299,18 @@ def test_check_for_new_rows_takes_a_county_argument(connection, pd_full):
     gb = new_rows.groupby('county').count()
     print(gb)
     assert gb.shape[0]==1 #i.e. there's only one county to group by
+
+def test_can_append_data_to_an_existing_table(connection, pd_full):
+    table_name = "property_gc_test2"
+    pd_sample = pd_full.sample(frac=0.01)
+    first_count = pd_sample.shape[0]
+    res = load_data_into_table(connection, table_name = table_name, data = pd_sample, if_exists="replace")
+    print(f"{res=}")
+    pd_smaller = pd_sample.sample(frac=0.1)
+    smaller_count = pd_smaller.shape[0]
+    appended = load_data_into_table(connection, table_name= table_name, data = pd_smaller, if_exists="append")
+    db_res = get_data_from_db(connection, query=f"select count(*) from {table_name}")
+    db_count = db_res.iloc[0,0]
+    print(f"{db_count=}")
+    assert db_count == (first_count + smaller_count)
+    dt = drop_table(connection, table_name)

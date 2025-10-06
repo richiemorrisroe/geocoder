@@ -29,6 +29,11 @@ def load_data_into_table(con, table_name, data: pd.DataFrame, if_exists=None):
     return 1
 
 
+def append_to_table(con, table_name: str, data: pd.DataFrame):
+    res = load_data_into_table(con, table_name, data, if_exists="append")
+    return True
+
+
 def load_shapefile(shapefile_path, table_name):
     if not table_name:
         raise ValueError("table name must be supplied")
@@ -47,6 +52,10 @@ def load_shapefile(shapefile_path, table_name):
 
 def join_tables(con, table_left, table_right, join_type, join_keys):
     pass
+
+def drop_table(con, table_name):
+    con.execute(f"drop table if exists {table_name}")
+    return None
 
 
 def get_data_from_db(connection, query):
