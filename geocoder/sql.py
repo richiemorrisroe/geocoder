@@ -111,3 +111,10 @@ def format_results(results):
         res.append(results)
     res_df = pd.DataFrame.from_records(res)
     return res_df
+
+
+def check_for_missing_rows(conn, table_a, table_b):
+    query = f"select * from {table_a} a LEFT JOIN {table_b} b USING(address, date_of_sale, price) where b.unique_id is null"
+    res = get_data_from_db(conn, query)
+    # breakpoint()
+    return res

@@ -17,7 +17,7 @@ import pandas as pd
 from geocoder.geocode_funcs import (create_logger, get_api_key,
                                    get_google_results, get_api_key,
                                    read_results_from_pickle, normalise_address, create_unique_identifier, standardise_data)
-from geocoder.sql import (create_schema, create_table, create_connection, drop_table, get_data_from_db, load_data_into_table,
+from geocoder.sql import (check_for_missing_rows, create_schema, create_table, create_connection, drop_table, get_data_from_db, load_data_into_table,
                          load_shapefile, get_property_data, generate_ungeocoded_addresses, check_for_new_rows)
 
 from geocoder.geocode_funcs import create_logger, log_progress_and_results
@@ -314,3 +314,19 @@ def test_can_append_data_to_an_existing_table(connection, pd_full):
     print(f"{db_count=}")
     assert db_count == (first_count + smaller_count)
     dt = drop_table(connection, table_name)
+
+
+def test_unique_id_can_prevent_duplicate_rows(connection, geocoded_data, pd_full):
+    gc_data = standardise_data(geocoded_data, address_column="address")
+    print(f"{len(gc_data)=}")
+    res = load_data_into_table(connection, table_name = "gc_test", data=gc_data, if_exists="replace")
+
+    pd_full['unique_id'] = create_unique_identifier(pd_full.address, pd_full.date_of_sale, pd_full.price)
+    pd_full = standardise_data(pd_full, address_column="address")
+    print(f"{len(pd_full)=}")
+    print(f"{pd_full.columns=}")
+    ugc_data = load_data_into_table(connection, table_name = "ungc_test", data=pd_full, if_exists="replace")
+    missing_rows = check_for_missing_rows(connection, "ungc_test", "gc_test")
+    assert len(missing_rows) == len(pd_full) - len(gc_data)
+    
+
