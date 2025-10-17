@@ -46,6 +46,7 @@ def gc_full():
     result = pd.read_csv("../../ppr_geocoded_till_oct2018.csv", encoding="latin1")
     return result
 
+
 @pytest.fixture
 def shapefile_path():
     return "../../electoral_divisions_gps.shp"
@@ -316,17 +317,23 @@ def test_can_append_data_to_an_existing_table(connection, pd_full):
     dt = drop_table(connection, table_name)
 
 
-def test_unique_id_can_prevent_duplicate_rows(connection, geocoded_data, pd_full):
+def test_unique_id_can_prevent_duplicate_rows(connection, geocoded_data, property_data):
     gc_data = standardise_data(geocoded_data, address_column="address")
-    print(f"{len(gc_data)=}")
+    print(f"{gc_data.shape=}")
+    print(f"{gc_data.columns=}")
+    print(f"{gc_data[['address', 'date_of_sale', 'price']].drop_duplicates().shape=}")
+    # print(f"{len(gc_data[["address", "date_of_sale", "price"]].drop_duplicates())=}")
     res = load_data_into_table(connection, table_name = "gc_test", data=gc_data, if_exists="replace")
-
+    pd_full = property_data
+    pd_full = pd_full[pd.to_datetime(pd_full.date_of_sale) >= pd.to_datetime('2018-10-13')]
     pd_full['unique_id'] = create_unique_identifier(pd_full.address, pd_full.date_of_sale, pd_full.price)
     pd_full = standardise_data(pd_full, address_column="address")
     print(f"{len(pd_full)=}")
+    print(f"{len(pd_full[['address', 'date_of_sale', 'price']].drop_duplicates())=}")
     print(f"{pd_full.columns=}")
     ugc_data = load_data_into_table(connection, table_name = "ungc_test", data=pd_full, if_exists="replace")
     missing_rows = check_for_missing_rows(connection, "ungc_test", "gc_test")
-    assert len(missing_rows) == len(pd_full) - len(gc_data)
+    mr2 = missing_rows[["address", "date_of_sale", "price"]].drop_duplicates()
+    assert len(mr2) == len(pd_full)
     
 
