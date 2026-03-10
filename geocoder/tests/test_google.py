@@ -272,11 +272,7 @@ def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
 def test_can_check_for_already_existing_rows(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
     table_name = 'property_sales_stg'
-<<<<<<< HEAD
     new_rows = check_for_new_rows(connection=connection, left_table=table_name)
-=======
-    new_rows = check_for_new_rows(connection=connection, table_name=table_name)
->>>>>>> origin/master
     print(new_rows.head())
     assert new_rows.shape[0] > 0 & new_rows.shape[0] <= pd_sample.shape[0]
 
