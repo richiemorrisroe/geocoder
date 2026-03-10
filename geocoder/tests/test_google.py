@@ -272,7 +272,11 @@ def test_unique_id_is_same_from_different_sources(pd_full, gc_full):
 def test_can_check_for_already_existing_rows(connection, pd_full):
     pd_sample = pd_full.sample(frac=0.01)
     table_name = 'property_sales_stg'
+<<<<<<< HEAD
     new_rows = check_for_new_rows(connection=connection, left_table=table_name)
+=======
+    new_rows = check_for_new_rows(connection=connection, table_name=table_name)
+>>>>>>> origin/master
     print(new_rows.head())
     assert new_rows.shape[0] > 0 & new_rows.shape[0] <= pd_sample.shape[0]
 
@@ -330,7 +334,6 @@ def test_unique_id_can_prevent_duplicate_rows(connection, geocoded_data, propert
     print(f"{pd_full.columns=}")
     ugc_data = load_data_into_table(connection, table_name = "ungc_test", data=pd_full, if_exists="replace")
     missing_rows = check_for_new_rows(connection, left_table="ungc_test", right_table="gc_test")
-    # missing_rows = check_for_missing_rows(connection, "ungc_test", "gc_test")
     mr2 = missing_rows[["address", "date_of_sale", "price"]].drop_duplicates()
     assert len(mr2) == len(pd_full)
     

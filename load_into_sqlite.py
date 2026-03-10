@@ -5,6 +5,7 @@ import pandas as pd
 import geocoder.sql as sql
 import geocoder.geocode_funcs as gf
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--database")
 parser.add_argument("--file-path")

@@ -95,7 +95,6 @@ def check_for_new_rows(connection, left_table="property_sales_stg", right_table=
     latitude is null
     {county_str}
     {date_str}
-    
     ),
     skip as (
     select address, TRUE as to_skip
@@ -107,6 +106,7 @@ def check_for_new_rows(connection, left_table="property_sales_stg", right_table=
     """.format(
         limit=limit_str, county_str=county_str, date_str=date_str, left_table=left_table,
         right_table=right_table
+
     )
     logging.log(level=1, msg=f"{sql=}")
     data = get_data_from_db(connection, query=sql)

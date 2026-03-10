@@ -245,6 +245,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "geocoder"
 version = "0.1.0"
 source = { virtual = "." }
@@ -254,6 +255,7 @@ dependencies = [
     { name = "plotnine" },
     { name = "pyarrow" },
     { name = "pyqt6" },
+
     { name = "requests" },
 ]
 
@@ -361,6 +363,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "kiwisolver"
 version = "1.4.9"
 source = { registry = "https://pypi.org/simple" }
@@ -891,6 +894,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "pyparsing"
 version = "3.2.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1038,6 +1042,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "scipy"
 version = "1.16.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1109,6 +1114,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "shapely"
 version = "2.0.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1161,6 +1167,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "statsmodels"
 version = "0.14.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1194,6 +1201,7 @@ wheels = [
 ]
 
 [[package]]
+
 name = "traitlets"
 version = "5.14.3"
 source = { registry = "https://pypi.org/simple" }

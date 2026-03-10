@@ -1,4 +1,5 @@
 import logging
+import pickle
 import re
 import sys
 
@@ -28,6 +29,7 @@ def get_api_key(path) -> str:
     key = key_file.readline().strip()
     return key
 
+
 def handle_ungeocodeable_address(conn, data):
     tbl_name = "non_geocodeable_addresses"
     print(f"{data=}")
@@ -36,7 +38,6 @@ def handle_ungeocodeable_address(conn, data):
     load_data_into_table(conn, table_name=tbl_name, data = data_df, if_exists="append")
     return 0
     
-
 def get_google_results(address, api_key=None, return_full_response=False):
     """Get geocode results from Google Maps Geocoding API.
     Note, that in the case of multiple google geocode reuslts, 
@@ -57,6 +58,7 @@ def get_google_results(address, api_key=None, return_full_response=False):
     if api_key is not None:
         geocode_url = geocode_url + "&key={}".format(api_key)
     logger.debug(f"{geocode_url=}")
+
     # Ping google for the reuslts:
     results = requests.get(geocode_url)
     # Results will be in JSON format - convert to dict using requests functionality
@@ -77,6 +79,7 @@ def get_google_results(address, api_key=None, return_full_response=False):
         }
         logger.warning(f"unable to geocode {address}")
         raise NonGeoCodeableError(f"unable to geocode {address}")
+
     else:    
         answer = results['results'][0]
         output = {
@@ -99,7 +102,7 @@ def get_google_results(address, api_key=None, return_full_response=False):
 
     return output
 
-import pickle
+
 
 
 def write_results_to_pickle(results, filename):
