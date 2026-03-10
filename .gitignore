@@ -1,0 +1,5 @@
+*.parquet
+*.dbf
+*.prj
+*.shp
+.shx
