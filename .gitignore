@@ -7,4 +7,5 @@
 *.csv_bak
 *.feather
 *.db
-
+*__pycache__*
+*.pytest_cache
