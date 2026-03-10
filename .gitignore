@@ -2,4 +2,9 @@
 *.dbf
 *.prj
 *.shp
-.shx
+*.shx
+*.csv
+*.csv_bak
+*.feather
+*.db
+

@@ -1,0 +1,26 @@
+[project]
+name = "geocoder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "geopandas>=1.0.1",
+    "pandas>=2.2.3",
+    "plotnine>=0.15.0",
+    "pyarrow>=18.1.0",
+    "pyqt6>=6.9.1",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "ipython>=9.5.0",
+    "pytest>=8.3.4",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "serial",
+]
