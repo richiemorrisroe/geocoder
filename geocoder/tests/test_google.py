@@ -26,7 +26,7 @@ from geocoder.join import join_input_and_output, preprocess_raw_data_for_join, a
 
 @pytest.fixture
 def property_data():
-    result = pd.read_feather("../ppr_processed.feather")
+    result = pd.read_feather("ppr_processed.feather")
     result_sample = result.sample(frac=0.01)
     return result_sample
 
